@@ -344,6 +344,36 @@ body:has(.wrap.play) #bgFx{display:none}
 @keyframes kittyLand{0%{transform:scale(1.04,.94)}100%{transform:scale(1,1)}}
 @keyframes kittyRun{from{transform:translateY(0) rotate(-1.2deg) scale(1,1)}to{transform:translateY(-2.5px) rotate(1.2deg) scale(1.01,1.015)}}
 @media(prefers-reduced-motion:reduce){.cat,.cat .cat-img,.cat .cat-stack{transition:none!important;animation:none!important}}
+/* ----- Đếm ngược 3-2-1 khi vào màn chơi ----- */
+.cd-ov{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(255,246,250,.86);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:none}
+.cd-card{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.cd-t{font-size:clamp(26px,5vmin,40px);font-weight:800;color:#d94678;letter-spacing:.5px}
+.cd-ring{width:min(46vmin,280px);height:min(46vmin,280px);border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 28%,#fff 0 18%,#ffe3ee 62%,#ffc4da 100%);border:6px solid #fff;box-shadow:0 0 0 6px #ffb3cf,0 14px 34px rgba(217,70,120,.28)}
+.cd-n{font-size:min(30vmin,190px);font-weight:900;line-height:1;color:#ff5f98;text-shadow:0 5px 0 #fff;animation:cdPop .95s cubic-bezier(.2,1.4,.4,1) both}
+.cd-s{font-size:clamp(20px,4vmin,30px);font-weight:700;color:#7649d4}
+@keyframes cdPop{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.18);opacity:1}65%{transform:scale(1)}100%{transform:scale(.9);opacity:.85}}
+/* ----- Bong bóng thưởng sau lượt thắng ----- */
+#bubLayer{position:fixed;inset:0;z-index:90;overflow:hidden;pointer-events:none}
+.bub{--bs:clamp(86px,18vmin,160px);position:absolute;width:var(--bs);height:var(--bs);margin:calc(var(--bs)/-2) 0 0 calc(var(--bs)/-2);pointer-events:auto;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  animation:bubIn 1.7s cubic-bezier(.2,.8,.3,1) var(--d) both,bubFloat var(--fd) ease-in-out calc(var(--d) + 1.7s) infinite alternate}
+.bub img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 6px 8px rgba(110,150,230,.25))}
+.bub.fb{border-radius:50%;border:3px solid rgba(255,255,255,.95);background:radial-gradient(circle at 30% 26%,#fff 0 9%,rgba(255,255,255,.35) 10% 34%,rgba(150,210,255,.38) 62%,rgba(255,170,220,.5) 100%);box-shadow:inset 0 0 18px rgba(255,255,255,.85),0 6px 14px rgba(120,170,255,.3)}
+.bub.popped{animation:bubPop .3s ease-out forwards;pointer-events:none}
+@keyframes bubIn{from{transform:translate(var(--sx),var(--sy)) scale(.7)}to{transform:translate(0,0) scale(1)}}
+@keyframes bubFloat{from{transform:translate(0,0)}to{transform:translate(var(--fx),calc(var(--fy)*-1))}}
+@keyframes bubPop{0%{transform:scale(1);opacity:1}45%{transform:scale(1.3);opacity:.9}100%{transform:scale(1.55);opacity:0}}
+.bub-stk{position:absolute;padding:6px;border-radius:24px;transform:translate(-50%,-50%);pointer-events:none;animation:bubStkIn .5s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes bubStkIn{0%{transform:translate(-50%,-50%) scale(.2) rotate(-12deg);opacity:0}60%{transform:translate(-50%,-50%) scale(1.2) rotate(4deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1) rotate(0)}}
+/* ----- Màn hình tổng kết ngập bong bóng ----- */
+body:has(.wrap.sum){background:linear-gradient(180deg,#dff3ff 0%,#f4ecff 55%,#ffeaf4 100%)}
+.wrap.sum{align-items:center;text-align:center}
+.sum-top{pointer-events:none;padding-top:clamp(6px,2.5vh,24px)}
+.sum-top h1{font-size:clamp(30px,6vmin,56px);color:#4a2c5a;margin:2px 0}
+.sum-emoji{font-size:clamp(34px,7vmin,58px);line-height:1.1}
+.sum-hint{font-size:clamp(18px,3.4vmin,28px);font-weight:700;color:#d94678}
+.sum-bar{margin-top:auto;justify-content:center;gap:14px;padding:14px 0 6px;position:relative}
+.sum-bar button{font-size:clamp(18px,3vmin,24px);padding:14px 28px}
+@media(prefers-reduced-motion:reduce){.bub{animation:none!important}.cd-n{animation:none!important}}
 
 .fish{position:absolute;right:6px;bottom:-2px;width:46px;height:32px;z-index:1}
 .fish svg{width:100%;height:100%;overflow:visible}
@@ -445,6 +475,53 @@ const MASCOTS={
   }
 };
 
+/* ----- Admin cấu hình tên & hình đại diện (lấy từ sticker) cho 3 nhân vật; lưu ở S.cfg.mascots = {id:{name,stickerId}} ----- */
+const mascotCfg=()=>{try{return (S.cfg&&S.cfg.mascots)||{}}catch(e){return {}}};
+function mascotArt(stk){
+  if(stk.url)return `<img src="${esc(tf(stk.url))}" alt="" draggable="false" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.outerHTML='⭐'">`;
+  return `<div style="width:100%;height:100%">${makeStickerSVG(stk.bg||'#ffe5ec',stk.accent||'#ff8fab',stk.emoji||'⭐',stk.rarity==='gold'?'#ffd166':'')}</div>`;
+}
+const mascotHidden=()=>{try{return (S.cfg&&S.cfg.mascotsHidden)||{}}catch(e){return {}}};
+const MASCOT_FALLBACK_SVG='<svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="54" fill="#ffe5ec" stroke="#ff9ebb" stroke-width="4"/><text x="60" y="80" font-size="58" text-anchor="middle">🐾</text></svg>';
+function mascotIds(){   // 3 nhân vật gốc (trừ cái đã xóa) + nhân vật admin thêm, theo thứ tự thêm
+  const cfg=mascotCfg(),hid=mascotHidden();
+  const added=Object.keys(cfg).filter(id=>cfg[id]&&cfg[id].custom).sort((x,y)=>(cfg[x].created||0)-(cfg[y].created||0));
+  return [...Object.keys(MASCOTS).filter(id=>!hid[id]),...added];
+}
+function mascot(id){
+  const o=mascotCfg()[id]||{},base=MASCOTS[id];
+  if(base){if(mascotHidden()[id])return null}else if(!o.custom)return null;
+  const stk=o.stickerId?allStickers().find(x=>x.id===o.stickerId):null;   // sticker bị xóa thì quay về hình mặc định
+  const name=(o.name&&o.name.trim())||(base?base.name:'New Friend');
+  if(base)return {...base,name,svg:stk?mascotArt(stk):base.svg,custom:!!stk};
+  return {id,name,vi:name,hello:`Hi! I am ${name}! Let's play and win stickers!`,svg:stk?mascotArt(stk):MASCOT_FALLBACK_SVG,custom:!!stk,added:true};
+}
+const mascotOr=id=>mascot(id)||mascot(mascotIds()[0]);                    // nhân vật đã xóa -> dùng nhân vật đầu tiên còn lại
+function persistMascots(){
+  writeLocalCache({cfg:S.cfg});
+  if(S.user){
+    const m=S.cfg.mascots||{},h=S.cfg.mascotsHidden||{};
+    update(ref(db,'users/'+S.user.uid+'/settings'),{mascots:Object.keys(m).length?m:null,mascotsHidden:Object.keys(h).length?h:null}).catch(()=>{S.pendingSync=true});
+  }
+}
+function saveMascot(id,patch){
+  const all=Object.assign({},mascotCfg());
+  all[id]=Object.assign({},all[id]||{},patch);
+  S.cfg=Object.assign({},S.cfg,{mascots:all});persistMascots();
+}
+function addMascot(name){
+  const id='m_'+Date.now().toString(36),all=Object.assign({},mascotCfg());
+  all[id]={custom:true,name:name||'New Friend',stickerId:'',created:Date.now()};
+  S.cfg=Object.assign({},S.cfg,{mascots:all});persistMascots();return id;
+}
+function delMascot(id){   // luôn giữ lại ít nhất 1 nhân vật
+  if(mascotIds().length<=1)return false;
+  const all=Object.assign({},mascotCfg()),hid=Object.assign({},mascotHidden());
+  if(MASCOTS[id])hid[id]=true;else delete all[id];
+  S.cfg=Object.assign({},S.cfg,{mascots:all,mascotsHidden:hid});persistMascots();return true;
+}
+function restoreMascot(id){const hid=Object.assign({},mascotHidden());delete hid[id];S.cfg=Object.assign({},S.cfg,{mascotsHidden:hid});persistMascots()}
+
 /* ============================================================================
    3. GIAI ĐOẠN 4: BỘ 24 STICKER VECTOR SVG GỐC (4 BỘ, 3 ĐỘ HIẾM)
    - Viền trắng như miếng dán thật, màu pastel, nét tròn cho bé gái 3 tuổi
@@ -517,6 +594,92 @@ const EMOJI_MAP={
   puppy:'🐕',helmet:'⛑️',badge:'🛡️',siren:'🚨',helicopter:'🚁',flashlight:'🔦',rope:'🪢',bone:'🦴',princess:'👸',prince:'🤴',crown:'👑',castle:'🏰',wand:'🪄',dragon:'🐉',mirror:'🪞',carriage:'🎠',snowman:'⛄',snowflake:'❄️',snow:'🌨️',ice:'🧊',mittens:'🧤',scarf:'🧣',penguin:'🐧',reindeer:'🦌',mermaid:'🧜‍♀️',seashell:'🐚',anchor:'⚓',treasure:'💰',lobster:'🦞',wave:'🌊',island:'🏝️',ship:'🚢',fairy:'🧚‍♀️',butterfly:'🦋',ladybug:'🐞',bee:'🐝',mushroom:'🍄',snail:'🐌',leaf:'🍃',sunflower:'🌻',happy:'😊',sad:'😢',angry:'😠',sleepy:'😴',scared:'😨',surprised:'😲',hungry:'😋',silly:'🤪',run:'🏃‍♀️',jump:'🤸‍♀️',clap:'👏',dance:'💃',sing:'🎤',hug:'🤗',eat:'🍴',sleep:'🛌',circle:'🔵',square:'🟩',triangle:'🔺',heart:'💗',diamond:'🔶',rectangle:'🟫',one:'1️⃣',two:'2️⃣',three:'3️⃣',four:'4️⃣',five:'5️⃣',six:'6️⃣',seven:'7️⃣',eight:'8️⃣',toothbrush:'🪥',soap:'🧼',bathtub:'🛁',shower:'🚿',toilet:'🚽',shampoo:'🧴',clock:'⏰',book:'📖',gift:'🎁',candle:'🕯️',lollipop:'🍭',candy:'🍬',cupcake:'🧁',donut:'🍩',party:'🎉',ribbon:'🎀',doctor:'🧑‍⚕️',teacher:'🧑‍🏫',firefighter:'🧑‍🚒',police_officer:'👮‍♀️',chef:'🧑‍🍳',farmer:'🧑‍🌾',pilot:'🧑‍✈️',nurse:'👩‍⚕️'
 };
 const COLOR_HEX={red:'#ef233c',blue:'#219ebc',yellow:'#ffb703',green:'#38b000',pink:'#ff7096',orange:'#fb8500',purple:'#8338ec',black:'#2b2d42'};
+
+/* ---- Ảnh minh họa mặc định cho toàn bộ kho từ (dùng khi chưa có ảnh Cloudinary) ---- */
+const EXTRA_EMOJI={"rabbit": "🐰", "goat": "🐐", "mouse": "🐭", "bird": "🐦", "frog": "🐸", "donkey": "🐴", "rooster": "🐓", "goose": "🦆", "hamster": "🐹", "kitten": "😺", "turkey": "🦃", "pony": "🐴", "hen": "🐔", "chick": "🐤", "calf": "🐮", "foal": "🐴", "lamb": "🐑", "piglet": "🐷", "duckling": "🐥", "parrot": "🦜", "goldfish": "🐠", "guinea_pig": "🐹", "bull": "🐂", "ox": "🐂", "mule": "🐴", "pigeon": "🕊️", "canary": "🐤", "tortoise": "🐢", "ferret": "🦡", "hedgehog": "🦔", "peacock": "🦚", "swan": "🦢", "panda": "🐼", "koala": "🐨", "kangaroo": "🦘", "crocodile": "🐊", "snake": "🐍", "fox": "🦊", "wolf": "🐺", "deer": "🦌", "rhino": "🦏", "camel": "🐫", "gorilla": "🦍", "owl": "🦉", "cheetah": "🐆", "leopard": "🐆", "jaguar": "🐆", "chimpanzee": "🐒", "orangutan": "🦧", "baboon": "🐒", "sloth": "🦥", "bat": "🦇", "eagle": "🦅", "hawk": "🦅", "flamingo": "🦩", "ostrich": "🐦", "toucan": "🦜", "alligator": "🐊", "lizard": "🦎", "chameleon": "🦎", "iguana": "🦎", "cobra": "🐍", "meerkat": "🦡", "raccoon": "🦝", "beaver": "🦫", "otter": "🦦", "skunk": "🦨", "badger": "🦡", "moose": "🦌", "bison": "🦬", "hyena": "🐺", "antelope": "🦌", "platypus": "🦆", "porcupine": "🦔", "armadillo": "🦔", "anteater": "🐻", "mango": "🥭", "lemon": "🍋", "kiwi": "🥝", "melon": "🍈", "plum": "🍑", "coconut": "🥥", "papaya": "🍈", "avocado": "🥑", "blueberry": "🫐", "raspberry": "🍓", "apricot": "🍑", "lime": "🍏", "orange_fruit": "🍊", "peach_fruit": "🍑", "pomegranate": "🍎", "fig": "🍇", "date": "🌴", "guava": "🍐", "lychee": "🍒", "passion_fruit": "🍑", "dragon_fruit": "🍉", "starfruit": "⭐", "jackfruit": "🍈", "durian": "🍈", "persimmon": "🍅", "grapefruit": "🍊", "blackberry": "🫐", "cranberry": "🍒", "cantaloupe": "🍈", "honeydew": "🍈", "pomelo": "🍊", "mandarin": "🍊", "raisin": "🍇", "prune": "🍇", "mulberry": "🍇", "rambutan": "🍒", "mangosteen": "🍑", "longan": "🍒", "head": "👤", "face": "🙂", "teeth": "🦷", "tongue": "👅", "neck": "🧍", "shoulders": "🤷", "arms": "💪", "legs": "🦵", "knees": "🦵", "toes": "🦶", "fingers": "☝️", "cheeks": "😊", "forehead": "🤔", "eyebrows": "🤨", "eyelashes": "👁️", "chin": "🧔", "lips": "💋", "jaw": "😁", "throat": "🗣️", "chest": "👕", "back_body": "🧍", "waist": "👖", "hips": "👖", "elbow": "💪", "wrist": "⌚", "thumb": "👍", "palm": "🖐️", "fist": "✊", "nails": "💅", "thigh": "🦵", "ankle": "🦶", "heel": "🦶", "skin": "🖐️", "belly": "🧸", "brain": "🧠", "lungs": "🫁", "muscle": "💪", "skeleton": "💀", "uncle": "👨", "aunt": "👩", "cousin": "🧒", "parents": "👨‍👩‍👧", "twins": "👯", "son": "👦", "daughter": "👧", "family_tree": "🌳", "boy": "👦", "girl": "👧", "neighbor": "🏘️", "pet": "🐕", "mother": "👩", "father": "👨", "grandmother": "👵", "grandfather": "👴", "grandparents": "👵", "grandson": "👦", "granddaughter": "👧", "nephew": "👦", "niece": "👧", "husband": "🤵", "wife": "👰", "children": "🧒", "kids": "🧒", "toddler": "👶", "newborn": "🍼", "best_friend": "👭", "classmate": "🧑‍🎓", "guest": "🙋", "relatives": "👪", "big_brother": "🧑", "little_sister": "👧", "grown_up": "🧑", "yo_yo": "🪀", "robot": "🤖", "drum": "🥁", "slide": "🎢", "swing": "🎠", "seesaw": "⚖️", "scooter": "🛴", "skates": "🛼", "crayons": "🖍️", "marble": "🔮", "top": "🌀", "whistle": "📣", "jump_rope": "🤸", "hula_hoop": "⭕", "frisbee": "🥏", "skateboard": "🛹", "tricycle": "🚲", "wagon": "🛒", "rocking_horse": "🎠", "puppet": "🎭", "dollhouse": "🏠", "playhouse": "🏡", "sandbox": "🏖️", "merry_go_round": "🎠", "trampoline": "🤾", "stickers": "🏷️", "playdough": "🎨", "paint": "🎨", "paintbrush": "🖌️", "chalk": "✏️", "board_game": "🎲", "dice": "🎲", "cards": "🃏", "pinwheel": "🌀", "slingshot": "🎯", "kaleidoscope": "🔮", "jack_in_the_box": "🎁", "toy_train": "🚂", "action_figure": "🦸", "water_gun": "🔫", "cheese": "🧀", "soup": "🍲", "noodles": "🍜", "pizza": "🍕", "sandwich": "🥪", "yogurt": "🥛", "juice": "🧃", "honey": "🍯", "butter": "🧈", "pancake": "🥞", "popcorn": "🍿", "salad": "🥗", "cereal": "🥣", "oatmeal": "🥣", "toast": "🍞", "jam": "🍓", "peanut_butter": "🥜", "sausage": "🌭", "bacon": "🥓", "ham": "🍖", "steak": "🥩", "meat": "🍖", "burger": "🍔", "hot_dog": "🌭", "french_fries": "🍟", "spaghetti": "🍝", "macaroni": "🍝", "pasta": "🍝", "dumpling": "🥟", "sushi": "🍣", "taco": "🌮", "burrito": "🌯", "waffle": "🧇", "muffin": "🧁", "biscuit": "🍪", "crackers": "🍘", "chips": "🥔", "pretzel": "🥨", "nuts": "🥜", "carrot": "🥕", "potato": "🥔", "tomato": "🍅", "corn": "🌽", "peas": "🥬", "broccoli": "🥦", "cucumber": "🥒", "pumpkin": "🎃", "onion": "🧅", "garlic": "🧄", "tea": "🍵", "smoothie": "🥤", "lemonade": "🥤", "milkshake": "🥤", "ketchup": "🍅", "sugar": "🍬", "salt": "🧂", "skirt": "👗", "coat": "🧥", "boots": "🥾", "gloves": "🧤", "sweater": "🧶", "shorts": "🩳", "jeans": "👖", "raincoat": "🧥", "slippers": "🩴", "belt": "🪢", "glasses": "👓", "umbrella": "☂️", "t_shirt": "👕", "blouse": "👚", "hoodie": "🧥", "cardigan": "🧶", "vest_clothes": "🦺", "suit": "🤵", "tie": "👔", "bow_tie": "🎀", "overalls": "👖", "leggings": "👖", "tights": "🧦", "swimsuit": "👙", "bikini": "👙", "bathrobe": "🧖", "nightgown": "👘", "underwear": "🩲", "diaper": "👶", "bib": "🍼", "apron": "🧑‍🍳", "cap": "🧢", "sun_hat": "👒", "sandals": "👡", "sneakers": "👟", "flip_flops": "🩴", "high_heels": "👠", "sunglasses": "🕶️", "watch": "⌚", "bracelet": "📿", "earrings": "💎", "handbag": "👜", "backpack": "🎒", "pocket": "👖", "button": "🔘", "zipper": "🤐", "jellyfish": "🐙", "seahorse": "🐴", "seal": "🦭", "shrimp": "🦐", "squid": "🦑", "clam": "🐚", "stingray": "🐟", "walrus": "🦭", "eel": "🐍", "orca": "🐋", "narwhal": "🐳", "pufferfish": "🐡", "clownfish": "🐠", "angelfish": "🐠", "swordfish": "🐟", "flying_fish": "🐟", "hammerhead": "🦈", "manta_ray": "🐟", "blue_whale": "🐋", "beluga": "🐳", "manatee": "🦭", "sea_lion": "🦭", "sea_otter": "🦦", "sea_turtle": "🐢", "hermit_crab": "🦀", "oyster": "🦪", "mussel": "🦪", "scallop": "🐚", "snail_sea": "🐌", "sea_urchin": "🐚", "sea_cucumber": "🥒", "anemone": "🌺", "sponge_sea": "🧽", "krill": "🦐", "barnacle": "🐚", "cuttlefish": "🦑", "sofa": "🛋️", "window": "🪟", "pillow": "🛏️", "blanket": "🛌", "lamp": "💡", "plate": "🍽️", "fork": "🍴", "fridge": "🧊", "carpet": "🧶", "shelf": "📚", "key": "🔑", "television": "📺", "house": "🏠", "roof": "🏠", "wall": "🧱", "floor": "🪵", "stairs": "🪜", "chimney": "🏠", "garage": "🚗", "balcony": "🏢", "yard": "🌳", "fence": "🚧", "gate": "🚪", "living_room": "🛋️", "bedroom": "🛏️", "kitchen": "🍳", "bathroom": "🛁", "armchair": "🪑", "desk": "🖥️", "bookcase": "📚", "wardrobe": "👔", "closet": "🚪", "drawer": "🗄️", "curtain": "🪟", "cushion": "🛋️", "rug": "🧶", "fan": "🌀", "air_conditioner": "❄️", "oven": "♨️", "stove": "🍳", "microwave": "🍲", "toaster": "🍞", "kettle": "☕", "blender": "🥤", "pot": "🍲", "pan": "🍳", "knife": "🔪", "chopsticks": "🥢", "glass": "🥛", "mug": "☕", "napkin": "🧻", "broom": "🧹", "mop": "🧽", "vacuum": "🧹", "trash_can": "🗑️", "washing_machine": "🧺", "iron": "👔", "telephone": "☎️", "computer": "💻", "vase": "🏺", "picture": "🖼️", "ambulance": "🚑", "police_car": "🚓", "taxi": "🚕", "motorcycle": "🏍️", "tractor": "🚜", "rocket": "🚀", "submarine": "🚢", "van": "🚐", "subway": "🚇", "bulldozer": "🚜", "crane": "🏗️", "sailboat": "⛵", "dump_truck": "🚛", "cement_mixer": "🚛", "excavator": "🏗️", "forklift": "🏗️", "tow_truck": "🚚", "garbage_truck": "🚛", "school_bus": "🚌", "minibus": "🚐", "tram": "🚊", "cable_car": "🚡", "monorail": "🚝", "bullet_train": "🚄", "jeep": "🚙", "camper": "🚐", "limousine": "🚘", "sports_car": "🏎️", "race_car": "🏎️", "go_kart": "🏎️", "moped": "🛵", "unicycle": "🎪", "stroller": "👶", "wheelchair": "🦽", "hot_air_balloon": "🎈", "blimp": "🎈", "glider": "🪂", "jet": "✈️", "spaceship": "🛸", "ferry": "⛴️", "yacht": "🛥️", "canoe": "🛶", "kayak": "🛶", "raft": "🛟", "speed_boat": "🚤", "jet_ski": "🌊", "hovercraft": "🚤", "snowmobile": "🛷", "wind": "💨", "storm": "⛈️", "lightning": "⚡", "mountain": "⛰️", "river": "🏞️", "forest": "🌲", "grass": "🌱", "rock": "🪨", "sand": "🏖️", "sky": "🌤️", "lake": "🏞️", "earth": "🌍", "sunshine": "🌞", "sunrise": "🌅", "sunset": "🌇", "day": "🌞", "night": "🌃", "thunder": "⛈️", "tornado": "🌪️", "hurricane": "🌀", "fog": "🌫️", "mist": "🌫️", "dew": "💧", "breeze": "🍃", "flood": "🌊", "drought": "🏜️", "hill": "⛰️", "valley": "🏞️", "volcano": "🌋", "cave": "🕳️", "cliff": "🏔️", "canyon": "🏜️", "desert": "🏜️", "jungle": "🌴", "woods": "🌲", "meadow": "🌼", "field": "🌾", "waterfall": "🏞️", "stream": "💧", "ocean": "🌊", "sea": "🌊", "soil": "🌱", "mud": "🟤", "stone": "🪨", "pebble": "🪨", "branch": "🌿", "root": "🥕", "bush": "🌳", "seed": "🌰", "fire": "🔥", "smoke": "💨", "spring": "🌷", "summer": "🌞", "autumn": "🍂", "winter": "❄️", "planet": "🪐", "space": "🌌", "ladder": "🪜", "hose": "🚒", "vest": "🦺", "walkie_talkie": "📻", "binoculars": "🔭", "cone": "🚧", "whistle_pup": "📣", "paw": "🐾", "doghouse": "🐕", "megaphone": "📢", "lifebuoy": "🛟", "first_aid": "⛑️", "leash": "🦮", "kennel": "🏠", "bark": "🐕", "tail": "🐕", "fetch": "🎾", "treat": "🦴", "food_bowl": "🥣", "lookout_tower": "🗼", "fire_hydrant": "🧯", "extinguisher": "🧯", "axe": "🪓", "stretcher": "🚑", "bandage": "🩹", "band_aid": "🩹", "medicine": "💊", "parachute": "🪂", "life_jacket": "🦺", "rescue_boat": "🚤", "radar": "📡", "toolbox": "🧰", "wrench": "🔧", "hammer": "🔨", "shovel": "⛏️", "safety_net": "🥅", "handcuffs": "🚔", "traffic_light": "🚦", "stop_sign": "🛑", "barrier": "🚧", "backpack_pup": "🎒", "hero": "🦸", "mission": "🎯", "team": "🤝", "king": "🤴", "queen": "👸", "knight": "⚔️", "throne": "👑", "tiara": "👑", "unicorn": "🦄", "jewel": "💎", "ring": "💍", "necklace": "📿", "tower": "🏰", "shield": "🛡️", "glass_slipper": "👠", "palace": "🏰", "drawbridge": "🌉", "moat": "🌊", "flag": "🚩", "banner": "🎌", "ballroom": "💃", "chandelier": "💡", "fountain": "⛲", "statue": "🗽", "gown": "👗", "cape": "🦸", "cloak": "🧙", "scepter": "🪄", "sword": "⚔️", "armor": "🛡️", "bow_arrow": "🏹", "wizard": "🧙", "witch": "🧙‍♀️", "genie": "🧞", "elf": "🧝", "giant": "👹", "dwarf": "🧔", "pegasus": "🦄", "phoenix": "🔥", "magic_lamp": "🪔", "magic_carpet": "🧞", "potion": "🧪", "spellbook": "📖", "scroll": "📜", "cauldron": "🍲", "gold_coin": "🪙", "gem": "💎", "coachman": "🎠", "feast": "🍗", "igloo": "🧊", "sled": "🛷", "skis": "🎿", "icicle": "🧊", "polar_bear": "🐻", "snowball": "⛄", "earmuffs": "🎧", "fireplace": "🔥", "hot_cocoa": "☕", "crystal": "💎", "beanie": "🧢", "blizzard": "🌨️", "snowstorm": "🌨️", "frost": "❄️", "hail": "🌨️", "glacier": "🏔️", "iceberg": "🧊", "frozen_lake": "⛸️", "snowboard": "🏂", "ice_skates": "⛸️", "snowshoes": "🥾", "toboggan": "🛷", "ski_goggles": "🥽", "snow_boots": "🥾", "parka": "🧥", "snowsuit": "🧥", "woolen_hat": "🧶", "ice_castle": "🏰", "snow_angel": "👼", "snow_fort": "🏰", "husky": "🐕", "arctic_fox": "🦊", "snowy_owl": "🦉", "puffin": "🐧", "pine_tree": "🌲", "pinecone": "🌲", "holly": "🎄", "mistletoe": "🌿", "sleigh": "🛷", "jingle_bell": "🔔", "chimney_snow": "🏠", "quilt": "🛏️", "thermometer": "🌡️", "shiver": "🥶", "pearl": "🦪", "coral_reef": "🐠", "seaweed": "🌿", "trident": "🔱", "pirate": "🏴‍☠️", "lighthouse": "🗼", "compass": "🧭", "palm_tree": "🌴", "beach": "🏖️", "message_bottle": "🍾", "seagull": "🕊️", "map": "🗺️", "merman": "🧜‍♂️", "mermaid_tail": "🧜‍♀️", "scales": "🐟", "gill": "🐟", "conch": "🐚", "treasure_chest": "💰", "pirate_ship": "⛵", "captain": "👨‍✈️", "sailor": "⚓", "telescope": "🔭", "spyglass": "🔭", "skull_flag": "🏴‍☠️", "cannon": "💣", "shipwreck": "🚢", "sunken_ship": "🚢", "barrel": "🛢️", "oar": "🚣", "paddle": "🛶", "lifeboat": "🛟", "buoy": "🛟", "dock": "⚓", "harbor": "⚓", "pier": "🌉", "sandcastle": "🏰", "bucket": "🪣", "spade": "⛏️", "beach_ball": "🏐", "beach_umbrella": "⛱️", "surfboard": "🏄", "snorkel": "🤿", "flippers": "🤿", "pelican": "🦆", "albatross": "🕊️", "lagoon": "🏝️", "tide": "🌊", "bubble_sea": "🫧", "wings": "🦋", "rose": "🌹", "tulip": "🌷", "daisy": "🌼", "caterpillar": "🐛", "dragonfly": "🦋", "acorn": "🌰", "pond": "🏞️", "firefly": "✨", "squirrel": "🐿️", "watering_can": "🚿", "clover": "🍀", "pixie": "🧚", "gnome": "🧙", "fairy_dust": "✨", "toadstool": "🍄", "lily_pad": "🐸", "water_lily": "🌸", "lotus": "🌸", "orchid": "🌺", "dandelion": "🌼", "lavender_flower": "🌷", "petal": "🌸", "stem": "🌱", "thorn": "🌹", "vine": "🌿", "moss": "🌿", "fern": "🌿", "pine_needle": "🌲", "bud": "🌱", "ant": "🐜", "grasshopper": "🦗", "cricket": "🦗", "beetle": "🪲", "spider": "🕷️", "spiderweb": "🕸️", "worm": "🪱", "cocoon": "🐛", "hummingbird": "🐦", "robin": "🐦", "nest": "🥚", "birdhouse": "🏠", "birdbath": "⛲", "wheelbarrow": "🛒", "rake": "🌾", "hoe": "⛏️", "flowerpot": "🪴", "lantern": "🏮", "gazebo": "⛺", "wish": "🌠", "excited": "🤩", "proud": "😌", "shy": "😊", "brave": "🦸", "tired": "😩", "thirsty": "🥤", "bored": "😑", "calm": "😌", "loved": "🥰", "funny": "🤪", "worried": "😟", "curious": "🤔", "joyful": "😄", "cheerful": "😀", "glad": "🙂", "mad": "😡", "grumpy": "😒", "cranky": "😤", "upset": "😞", "lonely": "😔", "nervous": "😬", "afraid": "😨", "shocked": "😱", "amazed": "😮", "confused": "😕", "dizzy": "😵", "sick": "🤒", "full": "🍽️", "cold": "🥶", "hot": "🥵", "warm": "☀️", "cool": "😎", "relaxed": "😌", "peaceful": "🕊️", "kind": "🤗", "friendly": "🤝", "gentle": "🤲", "polite": "🙏", "helpful": "🙌", "smart": "🤓", "clever": "💡", "strong": "💪", "safe": "🔒", "lucky": "🍀", "walk": "🚶", "swim": "🏊", "fly": "🕊️", "drink": "🥤", "read": "📖", "draw": "✏️", "wash": "🧼", "laugh": "😂", "smile": "😊", "climb": "🧗", "kick": "⚽", "throw": "🤾", "sit": "🪑", "stand": "🧍", "crawl": "👶", "skip": "🏃", "hop": "🐰", "tiptoe": "🩰", "march": "🥁", "slide_act": "🎢", "spin": "🌀", "turn": "🔄", "wave_act": "👋", "bend": "🧘", "catch": "🧤", "bounce": "⚽", "roll": "🎳", "push": "🚪", "pull": "🧲", "lift": "🏋️", "carry": "🎒", "hold": "🤲", "open": "📂", "close": "🚪", "write": "✍️", "cut": "✂️", "glue": "🧴", "fold": "📄", "build": "🧱", "cook": "🍳", "bake": "🧁", "pour": "🥛", "mix": "🥄", "taste": "😋", "smell": "👃", "listen": "👂", "look": "👀", "watch_act": "📺", "touch": "☝️", "point": "👉", "talk": "💬", "whisper": "🤫", "shout": "📢", "cry": "😢", "yawn": "🥱", "sneeze": "🤧", "cough": "😷", "wake_up": "⏰", "clean": "🧹", "sweep": "🧹", "dry": "🌬️", "kiss": "😘", "share": "🤝", "help": "🙋", "give": "🎁", "hide": "🙈", "find": "🔍", "dig": "⛏️", "plant": "🌱", "ride": "🚴", "drive": "🚗", "dive": "🤿", "snowflake_shape": "❄️", "pair": "🧦🧦", "dozen": "🥚", "many": "🎈🎈🎈", "few": "🍬🍬", "all": "💯", "count": "🔢", "towel": "🛁", "toothpaste": "🪥", "comb": "💇", "brush": "🪥", "sponge": "🧽", "robe": "🧖", "teddy": "🧸", "dream": "💭", "lullaby": "🎶", "nightlight": "🌙", "potty": "🚽", "sink": "🚰", "washcloth": "🧼", "bath_mat": "🛁", "bubble_bath": "🛁", "rubber_duck": "🦆", "faucet": "🚰", "drain": "🚿", "hairdryer": "💨", "lotion": "🧴", "powder": "🧴", "tissue": "🤧", "toilet_paper": "🧻", "step_stool": "🪜", "laundry_basket": "🧺", "crib": "🍼", "cradle": "👶", "bunk_bed": "🛏️", "mattress": "🛏️", "sheet": "🛏️", "duvet": "🛏️", "sleeping_bag": "🏕️", "bedtime_story": "📖", "fairy_tale": "📚", "alarm_clock": "⏰", "moonlight": "🌙", "starlight": "✨", "goodnight": "🌜", "nap": "😴", "snore": "💤", "chocolate": "🍫", "jelly": "🍮", "pie": "🥧", "pudding": "🍮", "popsicle": "🍧", "marshmallows": "🍡", "confetti": "🎊", "crown_party": "👑", "fireworks": "🎆", "music": "🎵", "clown": "🤡", "magic": "🎩", "birthday": "🎂", "birthday_cake": "🎂", "frosting": "🧁", "sprinkles": "🍩", "cherry_on_top": "🍒", "brownie": "🍫", "macaron": "🍪", "tart": "🥧", "cheesecake": "🍰", "croissant": "🥐", "cinnamon_roll": "🥐", "churro": "🍩", "cotton_candy": "🍭", "gumdrop": "🍬", "jellybean": "🍬", "gummy_bear": "🧸", "caramel": "🍮", "fudge": "🍫", "toffee": "🍬", "peppermint": "🍬", "sundae": "🍨", "cone_icecream": "🍦", "popsicle_stick": "🍡", "pinata": "🪅", "streamer": "🎏", "garland": "🎊", "invitation": "💌", "card_party": "🎴", "wrapping_paper": "🎁", "bow_ribbon": "🎀", "party_horn": "🥳", "mask": "🎭", "costume": "🦸", "magician": "🎩", "juggler": "🤹", "parade": "🎺", "prize": "🎁", "medal": "🏅", "trophy": "🏆", "dentist": "🦷", "vet": "🩺", "astronaut": "🧑‍🚀", "baker": "🥖", "builder": "👷", "artist": "🧑‍🎨", "singer": "🎤", "dancer": "💃", "postman": "📮", "gardener": "🧑‍🌾", "scientist": "🔬", "driver": "🚗", "lifeguard": "🛟", "paramedic": "🚑", "surgeon": "🩺", "pharmacist": "💊", "librarian": "📚", "principal": "🏫", "coach": "📣", "bus_driver": "🚌", "train_conductor": "🚂", "flight_attendant": "✈️", "mechanic": "🔧", "carpenter": "🪚", "plumber": "🔧", "electrician": "🔌", "painter": "🎨", "architect": "📐", "engineer": "⚙️", "waiter": "🍽️", "barista": "☕", "grocer": "🛒", "florist": "💐", "tailor": "🧵", "barber": "✂️", "hairdresser": "💇", "photographer": "📷", "reporter": "🎙️", "musician": "🎸", "actor": "🎬", "author": "✍️", "zookeeper": "🦁", "fisherman": "🎣", "park_ranger": "🏞️", "trash_collector": "🗑️", "detective": "🕵️", "guard": "💂", "soldier": "🪖", "judge": "⚖️", "mayor": "🏛️"};
+for(const k in EXTRA_EMOJI)if(!(k in EMOJI_MAP))EMOJI_MAP[k]=EXTRA_EMOJI[k];
+Object.assign(COLOR_HEX,{"white": "#ffffff", "brown": "#8d5524", "gray": "#9aa0a6", "gold": "#ffc800", "silver": "#c0c4cc", "peach": "#ffcba4", "mint": "#98e8c1", "cyan": "#00bcd4", "navy": "#1d3557", "violet": "#7f3fbf", "beige": "#e8d5b0", "coral": "#ff7f50", "turquoise": "#30d5c8", "teal": "#118a8a", "magenta": "#e0218a", "maroon": "#800020", "crimson": "#dc143c", "scarlet": "#ff2400", "indigo": "#4b0082", "lavender": "#b79ce2", "lilac": "#c8a2c8", "amber": "#ffbf00", "cream_color": "#fff3c4", "ivory": "#fffff0", "tan": "#d2b48c", "khaki": "#c3b091", "olive_color": "#808000", "emerald": "#2fbf71", "ruby": "#e0115f", "bronze": "#cd7f32", "copper": "#b87333", "sky_blue": "#87ceeb", "light_green": "#90ee90", "dark_blue": "#14339a", "hot_pink": "#ff4fa3", "bright_yellow": "#ffee00"});
+const NUM_TEXT={"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10", "eleven": "11", "twelve": "12", "thirteen": "13", "fourteen": "14", "fifteen": "15", "sixteen": "16", "seventeen": "17", "eighteen": "18", "nineteen": "19", "twenty": "20", "twenty_one": "21", "twenty_two": "22", "twenty_five": "25", "thirty": "30", "forty": "40", "fifty": "50", "sixty": "60", "seventy": "70", "eighty": "80", "ninety": "90", "hundred": "100", "thousand": "1,000", "million": "1,000,000", "first": "1st", "second": "2nd", "third": "3rd", "fourth": "4th", "fifth": "5th", "sixth": "6th", "seventh": "7th", "eighth": "8th", "ninth": "9th", "tenth": "10th", "half": "½", "quarter": "¼"};
+const NUM_COL=['#ef476f','#f78c28','#e0a800','#38b000','#1b9aaa','#3a86ff','#8338ec','#e0218a'];
+const TOPIC_ART={"pets_farm": {"t": "#ffe8d6", "e": "🐾"}, "wild_animals": {"t": "#fff1c9", "e": "🦁"}, "colors": {"t": "#eee9ff", "e": "🎨"}, "fruits": {"t": "#ffe3e3", "e": "🍎"}, "body": {"t": "#ffe5ec", "e": "🖐️"}, "family": {"t": "#ffe0f0", "e": "👨‍👩‍👧"}, "toys": {"t": "#e4f1ff", "e": "🧸"}, "food": {"t": "#fff0d1", "e": "🍽️"}, "clothes": {"t": "#f3e8ff", "e": "👕"}, "sea_animals": {"t": "#d9f2ff", "e": "🐠"}, "home": {"t": "#fdebd3", "e": "🏠"}, "vehicles": {"t": "#e0f0ff", "e": "🚗"}, "nature": {"t": "#e3f7df", "e": "🌳"}, "rescue_pups": {"t": "#dbe8ff", "e": "🐕"}, "princess_castle": {"t": "#ffdff0", "e": "👑"}, "snow_magic": {"t": "#e3f4ff", "e": "❄️"}, "mermaid_sea": {"t": "#d8f5f2", "e": "🧜‍♀️"}, "fairy_garden": {"t": "#eaf8d8", "e": "🧚"}, "feelings": {"t": "#fff3c4", "e": "😊"}, "actions": {"t": "#e8e4ff", "e": "🏃"}, "shapes": {"t": "#fff0d9", "e": "🔷"}, "numbers": {"t": "#e6f6ff", "e": "🔢"}, "bath_bedtime": {"t": "#e8eeff", "e": "🛁"}, "party_sweets": {"t": "#ffe1f1", "e": "🎉"}, "helpers": {"t": "#e2f3e6", "e": "🦺"}, "_": {"t": "#fff0f6", "e": "🌟"}};
+const hashStr=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)};
+const SHAPE_COL=['#ff6b9d','#4cc9f0','#ffb703','#7bc618','#9b5de5','#ff7a45'];
+const polyPts=(n,r=48,rot=-90)=>Array.from({length:n},(_,i)=>{const a=(rot+i*360/n)*Math.PI/180;return (60+r*Math.cos(a)).toFixed(1)+','+(60+r*Math.sin(a)).toFixed(1)}).join(' ');
+const starPts=Array.from({length:10},(_,i)=>{const a=(-90+i*36)*Math.PI/180,r=i%2?21:50;return (60+r*Math.cos(a)).toFixed(1)+','+(60+r*Math.sin(a)+3).toFixed(1)}).join(' ');
+const spiralPath=(()=>{let d='M60 60';for(let a=0.4;a<=18.8;a+=0.25){const r=a*2.4;d+=` L${(60+r*Math.cos(a)).toFixed(1)} ${(60+r*Math.sin(a)).toFixed(1)}`}return d})();
+const SHAPE_ART={
+  circle:c=>`<circle cx="60" cy="60" r="48" ${c.A}/>`,
+  square:c=>`<rect x="14" y="14" width="92" height="92" rx="10" ${c.A}/>`,
+  triangle:c=>`<polygon points="60,10 112,106 8,106" ${c.A}/>`,
+  heart:c=>`<path d="M60 106C20 76 8 52 8 36 8 20 22 9 37 9c10 0 18 5 23 13 5-8 13-13 23-13 15 0 29 11 29 27 0 16-12 40-52 70z" ${c.A}/>`,
+  diamond:c=>`<polygon points="60,6 102,60 60,114 18,60" ${c.A}/>`,
+  rectangle:c=>`<rect x="8" y="28" width="104" height="64" rx="10" ${c.A}/>`,
+  oval:c=>`<ellipse cx="60" cy="60" rx="50" ry="32" ${c.A}/>`,
+  crescent:c=>`<path d="M91 14A48 48 0 1 0 91 106A56 56 0 0 1 91 14Z" ${c.A}/>`,
+  cross:c=>`<path d="M46 10h28v36h36v28H74v36H46V74H10V46h36z" ${c.A}/>`,
+  plus:c=>`<path d="M50 14h20v36h36v20H70v36H50V70H14V50h36z" ${c.A}/>`,
+  minus:c=>`<rect x="12" y="46" width="96" height="28" rx="12" ${c.A}/>`,
+  arrow:c=>`<path d="M8 46h58V22l46 38-46 38V74H8z" ${c.A}/>`,
+  spiral:c=>`<path d="${spiralPath}" ${c.S}/>`,
+  cube:c=>`<polygon points="60,8 104,32 60,56 16,32" ${c.A}/><polygon points="16,32 60,56 60,112 16,88" ${c.A}/><polygon points="104,32 60,56 60,112 104,88" ${c.A}/><polygon points="60,8 104,32 60,56 16,32" fill="#fff" opacity=".3"/><polygon points="104,32 60,56 60,112 104,88" fill="#000" opacity=".16"/>`,
+  pentagon:c=>`<polygon points="${polyPts(5)}" ${c.A}/>`,
+  hexagon:c=>`<polygon points="${polyPts(6)}" ${c.A}/>`,
+  heptagon:c=>`<polygon points="${polyPts(7)}" ${c.A}/>`,
+  octagon:c=>`<polygon points="${polyPts(8,50,-67.5)}" ${c.A}/>`,
+  nonagon:c=>`<polygon points="${polyPts(9)}" ${c.A}/>`,
+  decagon:c=>`<polygon points="${polyPts(10)}" ${c.A}/>`,
+  sphere:c=>`<defs><radialGradient id="gSph" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></radialGradient></defs><circle cx="60" cy="60" r="48" ${c.A}/><circle cx="60" cy="60" r="48" fill="url(#gSph)"/>`,
+  cylinder:c=>`<path d="M20 28v64a40 14 0 0 0 80 0V28z" ${c.A}/><ellipse cx="60" cy="28" rx="40" ry="14" ${c.A}/><ellipse cx="60" cy="28" rx="40" ry="14" fill="#fff" opacity=".35"/>`,
+  arch:c=>`<path d="M16 108V58a44 44 0 0 1 88 0v50H78V58a18 18 0 0 0-36 0v50z" ${c.A}/>`,
+  drop:c=>`<path d="M60 8C60 8 20 54 20 78a40 40 0 0 0 80 0C100 54 60 8 60 8z" ${c.A}/><ellipse cx="43" cy="78" rx="7" ry="12" fill="#fff" opacity=".45"/>`,
+  ring_shape:c=>`<circle cx="60" cy="60" r="40" fill="none" stroke="${c.c}" stroke-width="20"/>`,
+  ring_circle:c=>`<circle cx="60" cy="60" r="40" fill="none" stroke="${c.c}" stroke-width="20"/>`,
+  star_shape:c=>`<polygon points="${starPts}" ${c.A}/>`,
+  cone_shape:c=>`<path d="M60 8L104 90a44 16 0 0 1-88 0z" ${c.A}/>`,
+  pyramid:c=>`<polygon points="60,8 12,92 68,112" ${c.A}/><polygon points="60,8 68,112 110,86" ${c.A}/><polygon points="60,8 68,112 110,86" fill="#000" opacity=".18"/>`,
+  prism:c=>`<polygon points="48,40 72,20 108,84 84,104" ${c.A}/><polygon points="48,40 72,20 108,84 84,104" fill="#000" opacity=".16"/><polygon points="12,104 48,40 84,104" ${c.A}/>`,
+  rhombus:c=>`<polygon points="60,6 112,60 60,114 8,60" ${c.A}/>`,
+  trapezoid:c=>`<polygon points="34,30 86,30 112,92 8,92" ${c.A}/>`,
+  parallelogram:c=>`<polygon points="38,30 114,30 82,90 6,90" ${c.A}/>`,
+  line:c=>`<line x1="16" y1="96" x2="104" y2="24" ${c.S}/>`,
+  dot:c=>`<circle cx="60" cy="60" r="18" ${c.A}/>`,
+  curve:c=>`<path d="M12 96C36 8 84 8 108 96" ${c.S}/>`,
+  zigzag:c=>`<polyline points="10,86 35,32 60,86 85,32 110,86" ${c.S}/>`,
+  wave_shape:c=>`<path d="M16 60Q30 22 44 60T72 60T100 60" ${c.S}/>`,
+  loop:c=>`<path d="M14 90C14 20 104 14 90 66 82 92 50 82 60 58 70 36 102 52 106 102" ${c.S}/>`,
+  check_mark:c=>`<polyline points="18,66 46,94 102,30" ${c.S}/>`,
+  trefoil:c=>`<circle cx="60" cy="36" r="26" ${c.A}/><circle cx="36" cy="78" r="26" ${c.A}/><circle cx="84" cy="78" r="26" ${c.A}/><circle cx="60" cy="62" r="14" ${c.A}/>`
+};
+const emojiArt=e=>{
+  let n=1;try{if(typeof Intl!=='undefined'&&Intl.Segmenter)n=[...new Intl.Segmenter().segment(e)].length}catch(_){}
+  const fs=n>=3?22:n===2?30:58;
+  return `<div style="font-size:${fs}cqw;line-height:1;white-space:nowrap;filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))">${e}</div>`;
+};
+const numArt=id=>{
+  const t=NUM_TEXT[id],L=t.length,n=/^\d+$/.test(t)?parseInt(t,10):-1;
+  const fs=Math.min(60,78/(L*0.55)),c=NUM_COL[hashStr(id)%NUM_COL.length];
+  const dots=(n>=1&&n<=10)?`<div style="display:flex;gap:2cqw;justify-content:center;flex-wrap:wrap;max-width:50cqw;margin-top:3cqw">${Array.from({length:n},()=>`<i style="display:block;width:7cqw;height:7cqw;border-radius:50%;background:${c};opacity:.55"></i>`).join('')}</div>`:'';
+  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><div style="font-weight:900;font-size:${fs}cqw;color:${c};text-shadow:0 3px 0 #fff,0 6px 10px rgba(0,0,0,.14)">${t}</div>${dots}</div>`;
+};
+const colorArt=hex=>`<svg viewBox="0 0 120 120" width="78%" height="78%" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))">
+  <path d="M60 10 C90 8 112 30 110 60 C108 90 88 110 58 110 C28 110 10 88 10 58 C10 28 30 12 60 10 Z" fill="${hex}" stroke="#fff" stroke-width="6"/>
+  <ellipse cx="42" cy="36" rx="12" ry="7" transform="rotate(-25 42 36)" fill="#fff" opacity=".45"/></svg>`;
+const shapeArt=id=>{
+  const col=({heart:'#ff4d6d',circle:'#ffb703',square:'#4cc9f0',triangle:'#7bc618',rectangle:'#9b5de5',diamond:'#ff7a45'})[id]||SHAPE_COL[hashStr(id)%SHAPE_COL.length];
+  const c={c:col,A:`fill="${col}" stroke="#fff" stroke-width="5" stroke-linejoin="round"`,S:`fill="none" stroke="${col}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"`};
+  return `<svg viewBox="0 0 120 120" width="78%" height="78%" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,.16))">${SHAPE_ART[id](c)}</svg>`;
+};
+function defaultArt(w,id){
+  const tp=TOPIC_ART[w.topic_id]||TOPIC_ART._;
+  const bg=`radial-gradient(circle,#fff 12%,${tp.t} 98%)`;
+  const inNum=!w.topic_id||w.topic_id==='numbers',inShape=!w.topic_id||w.topic_id==='shapes';
+  let html;
+  if(inNum&&NUM_TEXT[id]!=null)html=numArt(id);
+  else if(COLOR_HEX[id])html=colorArt(COLOR_HEX[id]);
+  else if(inShape&&SHAPE_ART[id])html=shapeArt(id);
+  else html=emojiArt(EMOJI_MAP[id]||tp.e);
+  return {bg,html};
+}
 
 const DEFAULT_TOPICS=[
   {id:'pets_farm',name_en:'Pets & Farm Animals',icon_word:'cat',order:1,wave:1,active:true},
@@ -777,30 +940,24 @@ function renderWordVisual(w,px=160,forceSlot=null){
   if(forceSlot!=null&&activeList[forceSlot])url=activeList[forceSlot].url;
   else url=pickWordImageUrl(w);
 
-  const emoji=EMOJI_MAP[id]||'🌟';
-  const cHex=COLOR_HEX[id];
-  const fallbackHTML=cHex
-    ?`<svg viewBox="0 0 120 120" width="78%" height="78%">
-        <path d="M60 10 C90 8 112 30 110 60 C108 90 88 110 58 110 C28 110 10 88 10 58 C10 28 30 12 60 10 Z" fill="${cHex}" stroke="#fff" stroke-width="6"/>
-        <ellipse cx="42" cy="36" rx="12" ry="7" transform="rotate(-25 42 36)" fill="#fff" opacity=".45"/>
-      </svg>`
-    :`<div style="font-size:58cqw;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.1))">${emoji}</div>`;
+  const art=defaultArt(w,id);
+  const fallbackHTML=art.html;
 
   if(!url||S.brokenUrls.has(url)){
-    return `<div class="wv" style="--px:${px}px;border-radius:24px;background:radial-gradient(circle,#fff 10%,#fff0f6 95%);display:flex;align-items:center;justify-content:center;margin:0 auto">${fallbackHTML}</div>`;
+    return `<div class="wv" style="--px:${px}px;border-radius:24px;background:${art.bg};display:flex;align-items:center;justify-content:center;margin:0 auto">${fallbackHTML}</div>`;
   }
   const domId='wi_'+id+'_'+Math.random().toString(36).slice(2,7);
   return `<div class="wv" style="--px:${px}px;border-radius:24px;background:#fff8fb;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;overflow:hidden">
     <img id="${domId}" src="${esc(tf(url))}" alt="${esc(w.word)}" style="width:100%;height:100%;object-fit:contain;padding:6px"
       onerror="window.__imgErr('${esc(url)}','${domId}')">
-    <div id="${domId}_fb" style="display:none;width:100%;height:100%;align-items:center;justify-content:center">${fallbackHTML}</div>
+    <div id="${domId}_fb" data-bg="${art.bg}" style="display:none;width:100%;height:100%;align-items:center;justify-content:center">${fallbackHTML}</div>
   </div>`;
 }
 window.__imgErr=(url,domId)=>{
   S.brokenUrls.add(url);
   const im=document.getElementById(domId),fb=document.getElementById(domId+'_fb');
   if(im)im.style.display='none';
-  if(fb)fb.style.display='flex';
+  if(fb){fb.style.display='flex';if(fb.dataset.bg&&fb.parentNode)fb.parentNode.style.background=fb.dataset.bg}
 };
 
 /* ============================================================================
@@ -825,7 +982,7 @@ function vPick(){
     <h1 style="text-align:center;margin:18px 0 24px;font-size:clamp(32px,5vmin,52px)">Who's playing? 🌟</h1>
     <div class="grid">
       ${ps.map(([id,p])=>{
-        const m=MASCOTS[p.mascot];
+        const m=p.mascot?mascotOr(p.mascot):null;
         const stkCnt=Object.values(p.stickers||{}).reduce((a,b)=>a+(b.count||1),0);
         return `<button class="pcard" data-act="who" data-id="${id}">
           ${m?`<div style="width:88px;height:88px">${m.svg}</div>`:`<div class="big">${esc(p.avatar||'👧')}</div>`}
@@ -855,7 +1012,7 @@ function gateBox(){
 
 function vHome(){
   const p=curProf()||{avatar:'👧',name:'Búp',mascot:'princess'};
-  const m=MASCOTS[p.mascot]||MASCOTS.princess;
+  const m=mascotOr(p.mascot);
   const stkCnt=Object.values(p.stickers||{}).reduce((a,b)=>a+(b.count||1),0);
 
   return `<div class="wrap fit home">
@@ -880,7 +1037,7 @@ function vHome(){
         </div>
       </div>
       <div class="row" style="gap:6px">
-        ${Object.values(MASCOTS).map(x=>`<button data-act="setmascot" data-v="${x.id}" style="width:54px;height:54px;padding:4px;border-radius:50%;${p.mascot===x.id?'outline:3px solid var(--pri)':''}">${x.svg}</button>`).join('')}
+        ${mascotIds().map(mascot).map(x=>`<button data-act="setmascot" data-v="${x.id}" style="width:54px;height:54px;padding:4px;border-radius:50%;${p.mascot===x.id?'outline:3px solid var(--pri)':''}">${x.svg}</button>`).join('')}
       </div>
     </div>
 
@@ -990,7 +1147,7 @@ function startTimer(){
   },250);
 }
 
-function startSession(mode,topicId,customWordIds=null){
+function startSession(mode,topicId,customWordIds=null,opts={}){
   stopTimer();
   const p=curProf(),st=(p&&p.settings)||{};
   let count=6,totalSec=0,presetKey='easy';
@@ -1032,9 +1189,29 @@ function startSession(mode,topicId,customWordIds=null){
     boxOpened:false,rareWon:null
   };
   S.view='play';
-  if(mode==='listen'){prepListenQ();startTimer();}
-  else if(mode==='speak'){prepSpeakQ();startTimer();}
-  else prepLearnCard();
+  beginWithCountdown(opts.say||'');
+}
+
+/* ----- Vào màn chơi ngay, đếm ngược 3-2-1 trong lúc giọng đọc tên chủ đề; đếm xong và đọc xong mới bắt đầu chơi ----- */
+const CD_SECS=3;
+function beginWithCountdown(sayText){
+  const s=S.sess;if(!s)return;
+  let cdDone=false,said=!sayText,started=false;
+  const start=()=>{
+    if(started||S.sess!==s||S.view!=='play'||!cdDone||!said)return;
+    started=true;s.counting=0;
+    if(s.mode==='listen'){prepListenQ();startTimer();}
+    else if(s.mode==='speak'){prepSpeakQ();startTimer();}
+    else prepLearnCard();
+  };
+  let n=CD_SECS;
+  const show=()=>{
+    if(S.sess!==s||S.view!=='play')return;
+    s.counting=n;render();playGentleBoing();
+    setTimeout(()=>{n--;if(n>0)show();else{cdDone=true;start()}},1000);
+  };
+  show();
+  if(sayText)speak(sayText,.9,()=>{said=true;start()});
 }
 
 /* ----- Cơ chế rút Sticker & Bay vào khay (Mục 4.2 & 4.3) ----- */
@@ -1085,6 +1262,91 @@ function awardStickerToTray(wordObj=null){
   }
 }
 
+
+/* ============================================================================
+   BONG BÓNG THƯỞNG: khi bé xong lượt chơi, màn hình ngập bong bóng lớn nhỏ (bubble_1..31.png) bay từ 4 phía vào
+   rồi lơ lửng; bé chạm từng bong bóng để vỡ ra 1 sticker. Chỉnh số lượng/kích thước ở BUBBLE_MIX.
+   ============================================================================ */
+const BUBBLE_BASE='https://res.cloudinary.com/tgvj8prc/image/upload/v1794994026/bubble_',BUBBLE_IMGS=31;
+const BUBBLE_MIX=[[6,170,220],[11,115,155],[17,62,105]];   // [số bong bóng, cỡ nhỏ nhất px, cỡ lớn nhất px] -> lớn, vừa, nhỏ
+let bubSaveT=null,bubSpokeAt=0;
+function clearBubbles(){const l=document.getElementById('bubLayer');if(l)l.remove()}
+function bubPersist(){
+  clearTimeout(bubSaveT);
+  bubSaveT=setTimeout(()=>{
+    const p=curProf();if(!p)return;
+    if(S.user&&S.cur&&navigator.onLine)update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur+'/stickers'),clean(p.stickers||{})).catch(()=>{S.pendingSync=true});
+    else S.pendingSync=true;
+  },700);
+}
+function awardBubbleSticker(){
+  const s=S.sess,p=curProf();if(!s)return null;
+  const stk=drawSticker(false,null);
+  s.tray.push(stk);
+  if(p){
+    if(!p.stickers)p.stickers={};
+    if(!p.stickers[stk.id])p.stickers[stk.id]={got_at:Date.now(),count:1};
+    else p.stickers[stk.id].count=(p.stickers[stk.id].count||1)+1;
+    writeLocalCache({profiles:S.profiles,pendingProfiles:true});
+    bubPersist();
+  }
+  return stk;
+}
+function startBubbles(){
+  clearBubbles();
+  if(S.view!=='summary'||!S.sess)return;
+  const W=window.innerWidth,H=window.innerHeight,k=Math.max(.55,Math.min(1.15,Math.min(W,H)/820));
+  const top=Math.min(90,H*.14),bottom=Math.min(130,H*.2);          // chừa chỗ tiêu đề phía trên và hàng nút phía dưới
+  const total=BUBBLE_MIX.reduce((a,m)=>a+m[0],0);
+  const order=[...Array(BUBBLE_IMGS)].map((_,i)=>i+1).sort(()=>Math.random()-.5);
+  const sizes=[];BUBBLE_MIX.forEach(m=>{for(let i=0;i<m[0];i++)sizes.push(Math.round((m[1]+Math.random()*(m[2]-m[1]))*k))});
+  sizes.sort((a,b)=>b-a);                                           // đặt bong bóng lớn trước để các bong bóng nhỏ lấp chỗ trống
+  const placed=[];
+  sizes.forEach(d=>{
+    const r=d/2;let best=null,bestScore=-1;
+    for(let t=0;t<60;t++){
+      const x=r+Math.random()*Math.max(1,W-2*r),y=top+r+Math.random()*Math.max(1,H-top-bottom-2*r);
+      let score=9;placed.forEach(p=>{score=Math.min(score,Math.hypot(x-p.x,y-p.y)/(r+p.r))});
+      if(score>bestScore){bestScore=score;best={x,y}}
+      if(score>=.62)break;
+    }
+    placed.push({x:best.x,y:best.y,r,d});
+  });
+  const layer=document.createElement('div');layer.id='bubLayer';
+  const sides=[[0,-125],[125,0],[0,125],[-125,0]];                  // bay vào từ trên, phải, dưới, trái
+  placed.forEach((p,i)=>{
+    const sd=sides[(i+Math.floor(Math.random()*4))%4],n=order[i%order.length];
+    const b=document.createElement('div');b.className='bub';
+    b.style.cssText=`left:${(p.x/W*100).toFixed(2)}%;top:${(p.y/H*100).toFixed(2)}%;--bs:${p.d}px;--sx:${sd[0]}vw;--sy:${sd[1]}vh;--d:${(i*.07).toFixed(2)}s;--fd:${(3.6+Math.random()*3.4).toFixed(1)}s;--fx:${(Math.random()*22-11).toFixed(0)}px;--fy:${(8+Math.random()*14).toFixed(0)}px`;
+    b.innerHTML=`<img alt="" draggable="false" src="${BUBBLE_BASE.replace('/upload/','/upload/w_300,f_auto,q_auto/')}${n}.png" onerror="this.parentNode.classList.add('fb');this.remove()">`;
+    layer.appendChild(b);
+  });
+  layer.addEventListener('pointerdown',e=>{const b=e.target.closest('.bub:not(.popped)');if(b)popBubble(b,layer)});
+  document.body.appendChild(layer);
+}
+function popBubble(b,layer){
+  b.classList.add('popped');
+  const r=b.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  playTing();burst(cx,cy,Math.round(5+r.width/30),['✨','💗','🫧','⭐']);
+  setTimeout(()=>b.remove(),300);
+  const stk=awardBubbleSticker();
+  if(stk){
+    const el=document.createElement('div');
+    el.className='bub-stk stk-'+(stk.rarity||'common');
+    el.style.cssText=`left:${cx}px;top:${cy}px`;
+    el.innerHTML=renderStickerThumb(stk,Math.round(Math.max(72,r.width*.85)));
+    layer.appendChild(el);
+    if(Date.now()-bubSpokeAt>1400){bubSpokeAt=Date.now();speak(stk.name,.92)}
+    setTimeout(()=>{
+      if(!el.animate){el.remove();return}
+      el.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:'translate(-50%,calc(-50% - 46px)) scale(.8)',opacity:0}],{duration:450,easing:'ease-in',fill:'forwards'}).onfinish=()=>el.remove();
+    },1100);
+  }
+  if(!layer.querySelector('.bub:not(.popped)')){                    // đã vỡ hết bong bóng
+    setTimeout(()=>{if(S.view==='summary'){playGoldFanfare();spawnConfetti()}},500);
+  }
+}
+
 /* ----- Chế độ 1: Học từ mới (Learn Words - Mục 3.3) ----- */
 function prepLearnCard(){
   const s=S.sess;
@@ -1124,7 +1386,7 @@ function prepListenQ(){
   const dist=pool.sort(()=>Math.random()-.5).slice(0,n-1);
   s.opts=[target,...dist].sort(()=>Math.random()-.5).map(w=>({w,gone:false}));
   render();
-  speak(`Touch the ${target.word}!`,.88);
+  speak(target.word,.88);   // chỉ đọc tên ảnh cần chọn
 }
 
 function onTapListenOpt(wId){
@@ -1532,11 +1794,20 @@ function vPlay(){
     </div>
   </div>`;
 
+  if(s.counting){
+    const tp=(S.topics||[]).find(x=>x.id===s.topicId);
+    return `<div class="wrap fit play">${topBar}<div class="play-shell"><div></div>${rightTray}</div>
+      <div class="cd-ov"><div class="cd-card">
+        <div class="cd-t">Get ready!</div>
+        <div class="cd-ring"><div class="cd-n">${s.counting}</div></div>
+        ${tp?`<div class="cd-s">${esc(tp.name_en||'')}</div>`:''}
+      </div></div></div>`;
+  }
   let bodyHTML='';
   if(s.mode==='learn'){
     if(s.miniCheck){
       bodyHTML=`<div style="text-align:center">
-        <button class="p" data-act="sayword" data-w="Touch the ${esc(w.word)}!" style="font-size:26px;padding:12px 28px;border-radius:99px;margin-bottom:16px">🔊 Touch the ${esc(w.word)}!</button>
+        <button class="p" data-act="sayword" data-w="${esc(w.word)}" style="font-size:28px;padding:12px 30px;border-radius:99px;margin-bottom:16px">🔊 ${esc(w.word)}</button>
         <div class="opts" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:min(100%,820px);margin:0 auto;--rows:${Math.ceil(s.miniOpts.length/2)}">
           ${s.miniOpts.map(o=>`<div class="wcard" data-act="minitap" data-id="${esc(o.id)}">
             ${renderWordVisual(o,180)}
@@ -1656,44 +1927,22 @@ async function finishSession(timeUp=false){
   }
   S.view='summary';render();
   playGoldFanfare();spawnConfetti();
-  speak(timeUp?"Time's up! Great job!":"Yay! Great job! Pick a gift box!",.9);
+  speak(timeUp?"Time's up! Great job!":"Yay! Great job! Pop the bubbles!",.9);
+  setTimeout(startBubbles,700);
 }
 
 function vSummary(){
   const s=S.sess;if(!s)return vHome();
-  return `<div class="wrap" style="text-align:center;max-width:740px">
-    <div class="box" style="padding:24px;background:linear-gradient(180deg,#fff,#fff5f9)">
-      <div style="font-size:54px">🎉🌟🎉</div>
-      <h1 style="font-size:36px;color:#4a2c5a;margin:6px 0">${s.timeUp?"Time's up! Great job!":"Awesome Job!"}</h1>
-
-      <p class="mut" style="font-weight:700">Stickers collected in this round (${s.tray.length}):</p>
-      <div class="row" style="justify-content:center;gap:10px;margin:12px 0">
-        ${s.tray.map(stk=>`<div class=" stk-${stk.rarity||'common'}" style="padding:6px;border-radius:20px;cursor:pointer" data-act="saystk" data-n="${esc(stk.name)}">
-          ${renderStickerThumb(stk,64)}
-        </div>`).join('')||'<div style="font-size:36px">⭐</div>'}
-      </div>
-
-      <!-- 3 Hộp Quà Bí Ẩn Dành Cho Sticker Hiếm -->
-      <div style="margin-top:20px;padding-top:18px;border-top:2px dashed var(--line)">
-        ${!s.boxOpened?`
-          <h2 style="color:#d94678;font-size:24px">🎁 Touch a Gift Box!</h2>
-          <div class="row" style="justify-content:center;gap:24px;margin-top:14px">
-            ${[0,1,2].map(i=>`<button class="gold wiggle" data-act="openbox" data-i="${i}" style="width:110px;height:110px;border-radius:28px;font-size:58px;display:flex;align-items:center;justify-content:center">🎁</button>`).join('')}
-          </div>
-        `:`
-          <div class="bump" style="display:inline-flex;flex-direction:column;align-items:center;padding:16px 28px;border-radius:28px" class="stk-${s.rareWon.rarity}">
-            <div style="font-size:15px;font-weight:700;color:#d97706">✨ SPECIAL STICKER UNLOCKED! ✨</div>
-            <div style="margin:10px 0" data-act="saystk" data-n="${esc(s.rareWon.name)}">${renderStickerThumb(s.rareWon,110)}</div>
-            <div style="font-size:24px;font-weight:700;color:#4a2c5a">${esc(s.rareWon.name)}</div>
-          </div>
-        `}
-      </div>
-
-      <div class="row" style="justify-content:center;gap:14px;margin-top:24px">
-        <button class="mint" data-act="replaymode" style="font-size:22px;padding:14px 28px">🔄 Play Again</button>
-        <button class="gold" data-act="goalbum" style="font-size:22px;padding:14px 28px">👑 My Stickers</button>
-        <button data-act="gohome" style="font-size:22px;padding:14px 24px">🏠 Home</button>
-      </div>
+  return `<div class="wrap fit sum">
+    <div class="sum-top">
+      <div class="sum-emoji">🎉</div>
+      <h1>${s.timeUp?"Time's up! Great job!":"Awesome Job!"}</h1>
+      <div class="sum-hint">🫧 Pop the bubbles! 🫧</div>
+    </div>
+    <div class="row sum-bar">
+      <button class="mint" data-act="replaymode">🔄 Play Again</button>
+      <button class="gold" data-act="goalbum">👑 My Stickers</button>
+      <button data-act="gohome">🏠 Home</button>
     </div>
   </div>`;
 }
@@ -2240,9 +2489,38 @@ function tIpad(){
   </div>`;
 }
 
+function tMascots(){
+  const cfg=mascotCfg(),pick=S.mkPick,ids=mascotIds(),hidden=Object.keys(MASCOTS).filter(id=>mascotHidden()[id]);
+  return `<div class="box">
+    <h2>🐾 Nhân vật đồng hành</h2>
+    <p class="mut">Thêm, xóa, đổi tên và đổi hình đại diện cho các bạn đồng hành của bé. Hình lấy từ kho sticker (gồm cả sticker Cloudinary bạn đã thêm). Luôn giữ lại ít nhất 1 nhân vật.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px">
+      ${ids.map(id=>{const m=mascot(id),d=MASCOTS[id];return `<div class="pcard" style="padding:14px;gap:8px;align-items:center;${pick===id?'outline:3px solid var(--pri)':''}">
+        <div style="width:96px;height:96px">${m.svg}</div>
+        <input data-mk="name" data-m="${id}" value="${esc((cfg[id]&&cfg[id].name)||'')}" placeholder="${esc(d?d.name:'Tên nhân vật')}" style="width:100%;text-align:center;font-weight:700">
+        <div class="row" style="gap:6px;justify-content:center">
+          <button class="p" data-act="mkpick" data-m="${id}" style="min-height:38px;padding:6px 12px;font-size:14px">🖼️ Chọn ảnh sticker</button>
+          ${m.custom?`<button data-act="mkreset" data-m="${id}" style="min-height:38px;padding:6px 12px;font-size:14px">↩️ ${d?'Mặc định':'Bỏ ảnh'}</button>`:''}
+          <button data-act="mkdel" data-m="${id}" ${ids.length<=1?'disabled':''} style="min-height:38px;padding:6px 12px;font-size:14px">🗑️ Xóa</button>
+        </div>
+      </div>`}).join('')}
+    </div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <input id="mkn" placeholder="Tên nhân vật mới (VD: Skye)" style="flex:1;min-width:200px">
+      <button class="mint" data-act="mkadd">➕ Thêm nhân vật</button>
+    </div>
+    ${hidden.length?`<div class="row" style="margin-top:10px;gap:8px"><span class="mut">Nhân vật mặc định đã xóa:</span>${hidden.map(id=>`<button data-act="mkrestore" data-m="${id}" style="min-height:36px;padding:4px 12px;font-size:14px">↩️ Khôi phục ${esc(((cfg[id]&&cfg[id].name)||MASCOTS[id].name))}</button>`).join('')}</div>`:''}
+    ${pick&&mascot(pick)?`<div style="margin-top:14px">
+      <div class="row" style="justify-content:space-between"><b>Chọn hình cho ${esc(mascot(pick).name)}</b><button data-act="mkclose" style="min-height:36px;padding:4px 12px">Đóng</button></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;max-height:340px;overflow:auto;padding:8px;margin-top:8px;background:#fff9fb;border-radius:18px">
+        ${allStickers().map(x=>`<button data-act="mkset" data-m="${pick}" data-s="${esc(x.id)}" title="${esc(x.name)}" style="padding:4px;border-radius:16px;min-height:0;${(cfg[pick]&&cfg[pick].stickerId===x.id)?'outline:3px solid var(--pri)':''}">${renderStickerThumb(x,56)}</button>`).join('')}
+      </div>
+    </div>`:''}
+  </div>`;
+}
 function tKids(){
   const ps=Object.entries(S.profiles);
-  return `<div class="box"><h2>Hồ sơ của bé & Cài đặt mức chơi (Mục 3.5, 3.7 & 5.2)</h2>
+  return `${tMascots()}<div class="box"><h2>Hồ sơ của bé & Cài đặt mức chơi (Mục 3.5, 3.7 & 5.2)</h2>
   ${ps.map(([id,p])=>{
     const st=p.settings||{listenPreset:'easy',speakPreset:'easy',maxChoices:8,speechLenience:'very_easy',micMode:'auto',slowRate:0.6};
     const wStatsMap=p.wordStats||{};
@@ -2343,9 +2621,33 @@ function tKids(){
 
 function tStickers(){
   const fam=arr(S.customStickers);
+  const batches={};fam.forEach(x=>{if(x.batch)(batches[x.batch]=batches[x.batch]||[]).push(x)});
   return `<div class="box">
+    <h2>⚡ Thêm sticker hàng loạt từ Cloudinary</h2>
+    <p class="mut">Link mỗi sticker = <b>thư mục</b> + <b>tên file</b> + <b>số</b> + <b>đuôi</b>. Chỉ cần khai số bắt đầu và số kết thúc, app tự tạo từng sticker (ví dụ <b>Skye_1.png</b> đến <b>Skye_108.png</b>). Chạy lại cùng dải số sẽ không bị trùng.</p>
+    <div class="row" style="gap:10px;align-items:flex-end">
+      <label style="flex:3;min-width:260px">Thư mục Cloudinary<input id="bkb" value="https://res.cloudinary.com/tgvj8prc/image/upload/v1794994474/"></label>
+      <label style="width:130px">Tên file (trước số)<input id="bkp" value="Skye_"></label>
+      <label style="width:90px">Từ số<input id="bka" type="number" min="0" value="1"></label>
+      <label style="width:90px">Đến số<input id="bkz" type="number" min="0" value="108"></label>
+      <label style="width:80px">Đuôi<input id="bkx" value="png"></label>
+    </div>
+    <div class="row" style="gap:10px;align-items:flex-end;margin-top:10px">
+      <label style="flex:1;min-width:180px">Tên hiển thị (để trống = lấy theo tên file)<input id="bkn" placeholder="Skye"></label>
+      <label style="width:160px">Độ hiếm<select id="bkr"><option value="common">Thường</option><option value="sparkle">Lấp lánh</option><option value="gold">Vàng hiếm</option></select></label>
+      <button class="p" data-act="addbulk">⚡ Thêm hàng loạt</button>
+    </div>
+    ${S.bulkMsg?`<p class="ok" style="margin:10px 0 0;font-weight:700">${esc(S.bulkMsg)}</p>`:''}
+    <p class="mut" style="font-size:14px;margin:8px 0 0">Sticker thêm hàng loạt <b>chưa mở khóa sẵn</b>: bé sẽ nhận được khi chơi (bong bóng, hộp quà, trả lời đúng).</p>
+    ${Object.keys(batches).length?`<div class="grid" style="margin-top:14px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${Object.keys(batches).map(k=>`<div class="pcard" style="padding:12px;align-items:flex-start;text-align:left">
+      <div class="row" style="gap:6px;flex-wrap:nowrap;overflow:hidden">${batches[k].slice(0,5).map(x=>renderStickerThumb(x,44)).join('')}</div>
+      <div style="font-weight:700;margin-top:6px">${esc(k)} · ${batches[k].length} sticker</div>
+      <button data-act="delbatch" data-b="${esc(k)}" style="min-height:34px;padding:4px 10px;font-size:13px;margin-top:6px">🗑️ Xóa cả nhóm</button>
+    </div>`).join('')}</div>`:''}
+  </div>
+  <div class="box">
     <h2>Bộ Sticker gốc (24 mẫu Vector SVG) & Sticker riêng của gia đình</h2>
-    <p class="mut">Bạn có thể dán link ảnh từ Cloudinary (ảnh nhân vật bé thích hoặc ảnh gia đình) để thêm vào bộ sưu tập phần thưởng của bé:</p>
+    <p class="mut">Bạn có thể dán link ảnh từ Cloudinary (ảnh nhân vật bé thích hoặc ảnh gia đình) để thêm từng sticker vào bộ sưu tập phần thưởng của bé:</p>
     <div class="row">
       <input id="csn" placeholder="Tên sticker tiếng Anh (VD: Super Bup)" style="flex:1;min-width:180px">
       <input id="csu" placeholder="Link ảnh Cloudinary hoặc tên file ngắn" style="flex:2;min-width:220px">
@@ -2357,7 +2659,7 @@ function tStickers(){
       <button class="p" data-act="addcstk">+ Thêm Sticker</button>
     </div>
     <div class="grid" style="margin-top:16px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">
-      ${fam.map((s,i)=>`<div class="pcard stk-${s.rarity||'sparkle'}" style="padding:10px">
+      ${fam.map((s,i)=>s.batch?'':`<div class="pcard stk-${s.rarity||'sparkle'}" style="padding:10px">
         ${renderStickerThumb(s,64)}
         <div style="font-size:15px">${esc(s.name)}</div>
         <button data-act="delcstk" data-i="${i}" style="min-height:34px;padding:4px 10px;font-size:13px">Xóa</button>
@@ -2577,6 +2879,7 @@ function render(){
     boot:()=>'<div class="wrap" style="text-align:center;margin-top:30vh"><div class="big">🐾</div></div>',
     login:vLogin,pick:vPick,home:vHome,topics:vTopics,play:vPlay,summary:vSummary,album:vAlbum,admin:vAdmin
   };
+  if(S.view!=='summary')clearBubbles();
   app.innerHTML=(V[S.view]||vHome)();
   if(S.view==='album')bindSceneDrag();
   bindLockLongPress();
@@ -2664,7 +2967,7 @@ const act={
     S.cur=d.id;
     const p=curProf();
     if(!p.mascot)p.mascot='princess';
-    const m=MASCOTS[p.mascot]||MASCOTS.princess;
+    const m=mascotOr(p.mascot);
     speak(m.hello,.9);
     if(S.words===null)await loadWords();
     go('home');
@@ -2672,13 +2975,13 @@ const act={
   back(){S.cur=null;go('pick')},
   gohome(){go('home')},
   sayhi(){
-    const p=curProf(),m=MASCOTS[(p&&p.mascot)||'princess']||MASCOTS.princess;
+    const p=curProf(),m=mascotOr((p&&p.mascot)||'princess');
     playTing();speak(m.hello,.9);
   },
   async setmascot(d){
     const p=curProf();if(!p)return;
     p.mascot=d.v;
-    const m=MASCOTS[d.v]||MASCOTS.princess;
+    const m=mascotOr(d.v);
     playTing();speak(m.hello,.9);render();
     if(S.user&&S.cur)update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur),{mascot:d.v}).catch(()=>{});
   },
@@ -2690,7 +2993,7 @@ const act={
   starttopic(d){
     playTing();
     const t=(S.topics||[]).find(x=>x.id===d.tid);
-    speak(t?t.name_en:'Surprise!',.9,()=>startSession(S.playMode,d.tid));
+    startSession(S.playMode,d.tid,null,{say:t?t.name_en:'Surprise!'});   // vào màn chơi ngay, giọng đọc chạy song song với đếm ngược
   },
   sayword(d){speak(d.w,.88)},
   replaylearn(){if(S.sess)playLearnVoice(S.sess.queue[S.sess.idx])},
@@ -2704,7 +3007,7 @@ const act={
       const other=(S.words||[]).filter(w=>w.id!==target.id&&w.active!==false);
       const dist=other[Math.floor(Math.random()*other.length)]||s.queue[0];
       s.miniOpts=[target,dist].sort(()=>Math.random()-.5);
-      render();speak(`Touch the ${target.word}!`,.88);
+      render();speak(target.word,.88);
       return;
     }
     s.idx++;prepLearnCard();
@@ -2716,11 +3019,18 @@ const act={
       playTing();awardStickerToTray(target);
       speak(`Yay! ${target.word}!`,.95,()=>{s.idx++;prepLearnCard()});
     }else{
-      playGentleBoing();speak(`Touch the ${target.word}!`,.82);
+      playGentleBoing();speak(target.word,.82);
     }
   },
   tapopt(d){onTapListenOpt(d.id)},
   manualpass(){passSpeak(true,'manual')},
+  mkpick(d){S.mkPick=d.m;render()},
+  mkclose(){S.mkPick=null;render()},
+  mkadd(){const n=(document.getElementById('mkn').value||'').trim();S.mkPick=addMascot(n);playTing();render()},   // thêm xong mở luôn bảng chọn ảnh
+  mkdel(d){const m=mascot(d.m);if(!m||!confirm(`Xóa nhân vật "${m.name}"?`))return;if(delMascot(d.m)){if(S.mkPick===d.m)S.mkPick=null;render()}},
+  mkrestore(d){restoreMascot(d.m);render()},
+  mkset(d){saveMascot(d.m,{stickerId:d.s});S.mkPick=null;playTing();render()},
+  mkreset(d){saveMascot(d.m,{stickerId:''});render()},
   vtest(d){speak(d.t||'Look! A cat.',d.r?+d.r:.88)},
   vreset(){saveVoice({uri:'',name:'',accent:'en-US',rate:1,pitch:1.08,srLang:'en-US'});render();speak('Hello! Look! A cat.',.88)},
   testtts(){
@@ -2843,6 +3153,38 @@ const act={
       update(ref(db,'users/'+S.user.uid+'/profiles/'+pid+'/stickers'),clean(pr.stickers)).catch(()=>{});
     });
     await set(ref(db,'users/'+S.user.uid+'/customStickers'),clean(S.customStickers));
+    render();
+  },
+  async addbulk(){
+    const g=id=>document.getElementById(id);
+    let base=g('bkb').value.trim();if(base&&base.slice(-1)!=='/')base+='/';
+    const pre=g('bkp').value.trim(),ext=g('bkx').value.trim().replace(/^\./,'')||'png';
+    const from=parseInt(g('bka').value,10),to=parseInt(g('bkz').value,10);
+    const label=g('bkn').value.trim()||pre.replace(/[_\-\s]+$/,''),rarity=g('bkr').value;
+    if(!/^https?:\/\//i.test(base)||!pre||!(from>=0)||!(to>=from)){S.bulkMsg='⚠️ Kiểm tra lại: thư mục (https://…), tên file, và số bắt đầu ≤ số kết thúc.';render();return}
+    if(to-from>=500){S.bulkMsg='⚠️ Mỗi lần thêm tối đa 500 sticker.';render();return}
+    const key=pre.replace(/[.#$\[\]\/\s]/g,'-');
+    const have=new Set(arr(S.customStickers).map(x=>x.url));
+    let added=0,skipped=0;
+    for(let n=from;n<=to;n++){
+      const url=`${base}${pre}${n}.${ext}`;
+      if(have.has(url)){skipped++;continue}
+      S.customStickers.push({id:`bulk_${key}${n}`,name:`${label} ${n}`,url,rarity,group:'Family',batch:pre});
+      added++;
+    }
+    writeLocalCache({customStickers:S.customStickers});
+    S.bulkMsg=`✅ Đã thêm ${added} sticker (${pre}${from}.${ext} → ${pre}${to}.${ext})${skipped?`, bỏ qua ${skipped} sticker đã có`:''}.`;
+    try{await set(ref(db,'users/'+S.user.uid+'/customStickers'),clean(S.customStickers))}
+    catch(e){S.bulkMsg+=' ⚠️ Chưa lưu được lên mạng, sẽ lưu tạm trên máy.';S.pendingSync=true}
+    render();
+  },
+  async delbatch(d){
+    const n=arr(S.customStickers).filter(x=>x.batch===d.b).length;
+    if(!n||!confirm(`Xóa cả nhóm "${d.b}" (${n} sticker)?`))return;
+    S.customStickers=arr(S.customStickers).filter(x=>x.batch!==d.b);
+    writeLocalCache({customStickers:S.customStickers});
+    S.bulkMsg='';
+    try{await set(ref(db,'users/'+S.user.uid+'/customStickers'),clean(S.customStickers))}catch(e){S.pendingSync=true}
     render();
   },
   async delcstk(d){
@@ -3046,6 +3388,7 @@ self.addEventListener('fetch',e=>{
 };
 
 app.addEventListener('change',async e=>{
+  if(e.target.dataset.mk==='name'){saveMascot(e.target.dataset.m,{name:e.target.value.trim()});render();return}
   if(e.target.dataset.vset){
     const k=e.target.dataset.vset;let v=e.target.value;
     if(k==='rate'||k==='pitch')v=+v;
