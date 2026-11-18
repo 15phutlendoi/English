@@ -2,263 +2,381 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Giai đoạn 0 – Thử nghiệm iPad</title>
+<meta name="apple-mobile-web-app-title" content="Adventure">
+<meta name="theme-color" content="#ffb347">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>English Adventure</title>
 <style>
-:root{--bg:#fff8ec;--card:#fff;--ink:#2b2b3a;--mut:#6b6b80;--ok:#1f9d55;--bad:#d64545;--pri:#ff7a59;--line:#ead9bf;--box:#f6efe2}
-@media (prefers-color-scheme:dark){:root{--bg:#1d1b24;--card:#2a2733;--ink:#f4f1ff;--mut:#a9a4c0;--line:#3d384d;--box:#1d1b24}}
-*{box-sizing:border-box}
-body{margin:0;font:17px/1.45 -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(32px,env(safe-area-inset-bottom))}
-main{max-width:760px;margin:0 auto}
-h1{font-size:24px;margin:0 0 4px}h2{font-size:19px;margin:0 0 8px}
-p{margin:6px 0}.mut{color:var(--mut);font-size:15px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
-button,select{font:inherit;border-radius:12px;border:1px solid var(--line);padding:12px 16px;margin:4px 4px 4px 0;background:var(--card);color:var(--ink);min-height:48px}
-button.p{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:600}
-button.ok{border-color:var(--ok);color:var(--ok)}button.no{border-color:var(--bad);color:var(--bad)}
-.out{background:var(--box);border-radius:10px;padding:10px;margin-top:8px;font:14px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;min-height:20px}
-.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
-input[type=range]{width:100%}textarea{width:100%;height:150px;font:12px ui-monospace,Menlo,monospace;background:var(--box);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
-img{max-width:160px;border-radius:10px;display:block;margin-top:8px}
+:root{--bg:#fff4dc;--ink:#3a2f4a;--pri:#ff7a59;--card:#fff;--line:#f0dcb0;--bad:#d64545}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font:18px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+#app{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.wrap{width:100%;max-width:900px}
+h1{font-size:30px;margin:8px 0}h2{font-size:20px;margin:0 0 10px}
+button{font:inherit;border:0;border-radius:20px;padding:12px 18px;background:var(--card);color:var(--ink);box-shadow:0 3px 0 var(--line);min-height:52px;cursor:pointer}
+button:active{transform:translateY(2px);box-shadow:none}
+button.p{background:var(--pri);color:#fff;box-shadow:0 3px 0 #d9583a;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+.big{font-size:72px;line-height:1}
+.pcard{padding:24px 10px;border-radius:28px;font-weight:700;font-size:24px;box-shadow:0 4px 0 var(--line)}
+.mode{padding:28px 10px;border-radius:28px;font-size:22px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;box-shadow:0 4px 0 var(--line)}
+.mode i{font-style:normal;font-size:56px}
+.mode small{position:absolute;top:10px;right:12px;background:#ffe3a3;border-radius:10px;padding:2px 8px;font-size:13px}
+.box{background:#fff;border-radius:20px;padding:16px;margin:14px 0;box-shadow:0 2px 0 var(--line)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.av{font-size:30px;padding:4px 10px;min-height:48px}
+.sel{outline:3px solid var(--pri)}
+input{font:inherit;padding:12px 14px;border:2px solid var(--line);border-radius:14px;width:100%;-webkit-user-select:text;user-select:text}
+.err{color:var(--bad);min-height:24px;margin-top:8px;font-size:16px}
+.ok{-webkit-user-select:text;user-select:text;word-break:break-all;font-size:14px}
+.th{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.th div{text-align:center;font-size:14px}
+.th img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#eee}
+.lock{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));opacity:.55}
+.mut{color:#7b6f8c;font-size:15px}
+@keyframes bump{30%{transform:scale(1.08) rotate(-2deg)}60%{transform:scale(.96)}}
+.bump{animation:bump .4s}
 </style>
 </head>
 <body>
-<main>
-<h1>Giai đoạn 0 – Thử nghiệm kỹ thuật</h1>
-<p class="mut">Mở trang này bằng Safari trên iPad của bé (địa chỉ https). Làm lần lượt 5 phép thử, rồi bấm "Tạo báo cáo" ở cuối và gửi kết quả cho mình. Nếu được, thử cả hai cách: mở trong Safari và mở từ biểu tượng "Thêm vào Màn hình chính".</p>
+<div id="app"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getDatabase,ref,get,set,push,remove,update} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
-<section class="card"><h2>0. Thông tin thiết bị</h2><div class="out" id="env"></div></section>
+const cfg={apiKey:"AIzaSyChtkb9z3LEoTqEmL-MMtsCWh1iW7sU95Q",authDomain:"englishadventure-d9aff.firebaseapp.com",databaseURL:"https://englishadventure-d9aff-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"englishadventure-d9aff",appId:"1:608773783712:web:33c52e27b8ee28346a09c5"};
+const fb=initializeApp(cfg),auth=getAuth(fb),db=getDatabase(fb);
 
-<section class="card"><h2>1. Giọng đọc mẫu (TTS)</h2>
-<p class="mut">Bấm từng nút và nghe. Lần bấm đầu tiên giúp iPad cho phép phát âm thanh.</p>
-<select id="voice"></select>
-<p class="mut">Tốc độ chậm: <b id="rv">0.6</b></p>
-<input type="range" id="rate" min="0.3" max="1" step="0.05" value="0.6">
-<div>
-<button class="p" onclick="say('Cat!',0.9,'cat_normal')">Cat (bình thường)</button>
-<button onclick="say('Cat.',+$('rate').value,'cat_slow')">Cat (chậm)</button>
-<button onclick="say('el... e... phant. Elephant.',+$('rate').value,'elephant_slow')">Elephant (tách âm, chậm)</button>
-<button onclick="say('Look! A cat. Say cat!',0.9,'intro')">Câu hướng dẫn</button>
-</div>
-<button class="ok" onclick="R.ttsVerdict='ổn';log('tv','Bạn chấm: giọng ổn')">Giọng nghe ổn</button>
-<button class="no" onclick="R.ttsVerdict='chưa ổn';log('tv','Bạn chấm: giọng chưa ổn')">Giọng chưa ổn</button>
-<div class="out" id="tv"></div>
-<div class="out" id="tts"></div></section>
+const AV=['🐶','🐱','🐰','🦁','🐼','🦊','🐯','🐸','🐵','🦄','🐻','🐧'];
+const S={user:null,profiles:{},words:null,topics:null,cur:null,view:'boot',err:'',newAv:'🐶',newName:'',tab:'kids',edit:null,imp:null,tfil:'',perm:false};
+const app=document.getElementById('app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arr=v=>v?(Array.isArray(v)?v:Object.values(v)).filter(Boolean):[];
+const val=async p=>{const s=await get(ref(db,p));return s.exists()?s.val():null};
+const tf=u=>u&&u.indexOf('res.cloudinary.com')>-1&&u.indexOf('f_auto')<0?u.replace('/upload/','/upload/w_400,f_auto,q_auto/'):(u||'');
+const imgs=w=>arr(w.images).filter(i=>i.url&&i.active!==false);
 
-<section class="card"><h2>2. Nhận diện giọng nói (chấm dễ tính)</h2>
-<p class="mut">Chọn từ, bấm "Bé nói" rồi nói từ đó (nên để bé tự thử). Lần 1 và 2 có thể chưa pass; lần 3 luôn pass.</p>
-<select id="word" onchange="att=0;log('stt','')"><option>cat</option><option>dog</option><option>elephant</option><option>banana</option><option>red</option></select>
-<button class="p" onclick="listen()">🎤 Bé nói</button>
-<button onclick="att=0;log('stt','Đã đặt lại số lần')">Đặt lại lần thử</button>
-<div class="out" id="stt"></div></section>
-
-<section class="card"><h2>3. Ghi âm và phát lại (phương án dự phòng)</h2>
-<p class="mut">Ghi 3 giây rồi tự phát lại. Dùng khi nhận diện giọng nói không ổn định.</p>
-<button class="p" onclick="rec3()">⏺ Ghi 3 giây</button>
-<div class="out" id="rec"></div></section>
-
-<section class="card"><h2>4. Âm báo "ting" và độ dài giọng đọc</h2>
-<button onclick="ding()">🔔 Phát "ting"</button>
-<p class="mut">Độ dài giọng đọc "Cat!" (ms) được đo ở phép thử 1 và ghi vào báo cáo, để tính thời gian còn lại cho bé ở các mức có đồng hồ.</p>
-<div class="out" id="ding"></div></section>
-
-<section class="card"><h2>5. Kết nối Firebase và Cloudinary</h2>
-<button class="p" onclick="net()">Kiểm tra</button>
-<div class="out" id="net"></div>
-<img id="img" alt="" style="display:none"></section>
-
-<section class="card"><h2>Báo cáo</h2>
-<button class="p" onclick="report()">Tạo báo cáo</button>
-<button onclick="copyR()">Sao chép</button>
-<textarea id="rep" readonly></textarea></section>
-</main>
-
-<script>
-var DB_URL='https://englishadventure-d9aff-default-rtdb.asia-southeast1.firebasedatabase.app/';
-var IMG_URL='https://res.cloudinary.com/tgvj8prc/image/upload/w_600,f_auto,q_auto/vocab/cat';
-var $=function(i){return document.getElementById(i)};
-var R={tts:{},stt:[],att:0};
-var att=0;
-function log(id,m){$(id).textContent=m}
-function add(id,m){$(id).textContent+=m+'\n'}
-
-/* 0. Môi trường */
-(function(){
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  R.env={
-    ua:navigator.userAgent,
-    https:location.protocol==='https:',
-    secure:window.isSecureContext,
-    standalone:!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)),
-    tts:'speechSynthesis' in window,
-    stt:!!SR,
-    mediaRecorder:typeof MediaRecorder!=='undefined',
-    online:navigator.onLine
-  };
-  var e=R.env;
-  $('env').textContent=
-    'https: '+e.https+' | secure: '+e.secure+'\n'+
-    'Chạy từ Màn hình chính (standalone): '+e.standalone+'\n'+
-    'Giọng đọc (TTS): '+e.tts+' | Nhận diện giọng nói: '+e.stt+' | Ghi âm: '+e.mediaRecorder+'\n'+
-    'Trình duyệt: '+e.ua;
-})();
-
-/* 1. TTS */
-var voices=[];
-function loadVoices(){
-  if(!('speechSynthesis' in window))return;
-  voices=speechSynthesis.getVoices().filter(function(v){return /^en/i.test(v.lang)});
-  var pref=/Samantha|Ava|Allison|Zoe|Nicky|Siri|Enhanced|Premium/i;
-  voices.sort(function(a,b){
-    var sa=(a.lang==='en-US'?2:0)+(pref.test(a.name)?3:0)+(a.localService?0:0);
-    var sb=(b.lang==='en-US'?2:0)+(pref.test(b.name)?3:0);
-    return sb-sa;
-  });
-  $('voice').innerHTML=voices.map(function(v,i){return '<option value="'+i+'">'+v.name+' ('+v.lang+')</option>'}).join('');
-  R.voices=voices.slice(0,6).map(function(v){return v.name+' '+v.lang});
-}
-if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-$('rate').oninput=function(){$('rv').textContent=this.value};
-function say(text,rate,key){
-  if(!('speechSynthesis' in window)){log('tts','Thiết bị không hỗ trợ TTS');return}
-  speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  var v=voices[+$('voice').value];
-  if(v)u.voice=v;
-  u.lang='en-US';u.rate=rate;
-  var t0=0;
-  u.onstart=function(){t0=Date.now()};
-  u.onend=function(){
-    var ms=Date.now()-t0;
-    R.tts[key]={ms:ms,voice:v?v.name:'mặc định',rate:rate};
-    add('tts',key+': '+ms+' ms ('+(v?v.name:'mặc định')+', tốc độ '+rate+')');
-  };
-  u.onerror=function(e){add('tts',key+': lỗi '+e.error)};
-  speechSynthesis.speak(u);
-}
-
-/* 2. Nhận diện giọng nói */
-var VAR={cat:['cut','cap','kat','kit','hat'],dog:['dug','dock','doll','dad'],elephant:['elefant','elephent','element'],banana:['bannana','bernana','banner'],red:['rad','read','bread','ret']};
-function norm(s){return s.toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()}
-function lev(a,b){
-  var m=[],i,j;
-  for(i=0;i<=a.length;i++){m[i]=[i];for(j=1;j<=b.length;j++)m[i][j]=i?0:j}
-  for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)
-    m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
-  return m[a.length][b.length];
-}
-function judge(w,alts){
-  for(var k=0;k<alts.length;k++){
-    var t=norm(alts[k].t);if(!t)continue;
-    var ws=t.split(' ');
-    if(ws.indexOf(w)>-1)return{pass:true,why:'có chứa đúng từ'};
-    if(VAR[w]&&ws.some(function(x){return VAR[w].indexOf(x)>-1}))return{pass:true,why:'trùng biến thể phát âm lệch'};
-    if(ws.some(function(x){return lev(x,w)<=Math.floor(w.length/2)}))return{pass:true,why:'gần giống từ đích'};
-    if(ws.some(function(x){return x[0]===w[0]&&Math.abs(x.length-w.length)<=2}))return{pass:true,why:'cùng âm đầu'};
-  }
-  return{pass:false,why:'chưa khớp'};
-}
-function listen(){
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){log('stt','Thiết bị này không có nhận diện giọng nói.');R.stt.push({err:'không hỗ trợ'});return}
-  var w=$('word').value;
-  att++;
-  var r=new SR();r.lang='en-US';r.interimResults=false;r.maxAlternatives=5;r.continuous=false;
-  var got=false,fail=false,t0=Date.now();
-  log('stt','Lần '+att+'/3 – đang nghe "'+w+'"... hãy nói ngay.');
-  r.onresult=function(e){
-    got=true;
-    var alts=[];
-    for(var i=0;i<e.results[0].length;i++)alts.push({t:e.results[0][i].transcript,c:+(e.results[0][i].confidence||0).toFixed(2)});
-    var j=judge(w,alts);
-    var final=j.pass||att>=3;
-    var msg='Lần '+att+'/3. Máy nghe được: '+alts.map(function(a){return '"'+a.t+'" ('+a.c+')'}).join(', ')+'\n';
-    if(j.pass)msg+='✔ PASS – '+j.why;
-    else if(att>=3)msg+='✔ PASS (lần 3 luôn pass) – kết quả thật: '+j.why;
-    else msg+='✘ Chưa pass – app sẽ đọc chậm rồi mời nói lại.';
-    log('stt',msg);
-    R.stt.push({word:w,attempt:att,alts:alts,pass:j.pass,why:j.why,ms:Date.now()-t0});
-    if(final)att=0;
-  };
-  r.onerror=function(e){
-    fail=true;
-    log('stt','Lỗi nhận diện: '+e.error+(e.error==='not-allowed'||e.error==='service-not-allowed'?'\n(Chưa cho phép micro, hoặc Dictation/Siri đang tắt trong Cài đặt iPad.)':''));
-    R.stt.push({word:w,attempt:att,err:e.error});
-    att=Math.max(0,att-1);
-  };
-  r.onend=function(){
-    if(!got&&!fail){
-      log('stt','Không nghe thấy tiếng nói (hết thời gian). Bấm Bé nói để thử lại.');
-      R.stt.push({word:w,attempt:att,err:'không nghe thấy'});
-      att=Math.max(0,att-1);
-    }
-  };
-  try{r.start()}catch(x){log('stt','Không bắt đầu được: '+x.message);att=Math.max(0,att-1)}
-}
-
-/* 3. Ghi âm */
-function rec3(){
-  if(!navigator.mediaDevices||!window.MediaRecorder){log('rec','Thiết bị không hỗ trợ ghi âm trên trình duyệt.');R.rec={ok:false,err:'không hỗ trợ'};return}
-  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-    var chunks=[];
-    var mt=MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'';
-    var mr=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);
-    mr.ondataavailable=function(e){if(e.data.size)chunks.push(e.data)};
-    mr.onstop=function(){
-      stream.getTracks().forEach(function(t){t.stop()});
-      var blob=new Blob(chunks,{type:mr.mimeType||'audio/mp4'});
-      var a=new Audio(URL.createObjectURL(blob));
-      log('rec','Ghi xong ('+Math.round(blob.size/1024)+' KB, '+(mr.mimeType||'?')+'). Đang phát lại...');
-      R.rec={ok:true,kb:Math.round(blob.size/1024),mime:mr.mimeType};
-      a.play().catch(function(e){log('rec','Ghi được nhưng không tự phát lại: '+e.message);R.rec.playErr=e.message});
-    };
-    log('rec','Đang ghi 3 giây... hãy nói.');
-    mr.start();setTimeout(function(){mr.stop()},3000);
-  }).catch(function(e){log('rec','Không mở được micro: '+e.name);R.rec={ok:false,err:e.name}});
-}
-
-/* 4. Ting */
-function ding(){
+function speak(t){
   try{
-    var C=window.AudioContext||window.webkitAudioContext;var c=new C();
-    var o=c.createOscillator(),g=c.createGain();
-    o.type='sine';o.frequency.setValueAtTime(880,c.currentTime);o.frequency.exponentialRampToValueAtTime(1320,c.currentTime+0.15);
-    g.gain.setValueAtTime(0.25,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.5);
-    o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.5);
-    log('ding','Đã phát "ting". Bạn có nghe thấy không?');R.ding='đã phát';
-  }catch(e){log('ding','Lỗi: '+e.message);R.ding='lỗi '+e.message}
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.85;
+    const sc=v=>(v.lang==='en-US'?2:0)+(/Samantha|Ava|Allison|Zoe|Nicky|Siri|Enhanced|Premium/i.test(v.name)?3:0);
+    const BAD=/Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy/i;
+    const v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)&&!BAD.test(v.name)).sort((a,b)=>sc(b)-sc(a))[0];
+    if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
 }
 
-/* 5. Mạng */
-function net(){
-  log('net','Đang kiểm tra...');
-  var t0=Date.now();
-  R.net={};
-  fetch(DB_URL+'.json?shallow=true').then(function(r){
-    R.net.db={status:r.status,ms:Date.now()-t0};
-    return r.text().then(function(t){
-      add('net','Firebase Realtime Database: HTTP '+r.status+' ('+(Date.now()-t0)+' ms)'+(r.status===401?' – kết nối được, đang khóa quyền (đúng mong đợi)':r.status===200?' – kết nối được, dữ liệu đang mở công khai':''));
+/* ---------- Giao diện ---------- */
+function vLogin(){return `<div class="wrap" style="max-width:420px;margin-top:8vh;text-align:center">
+<div class="big">🐾</div><h1>English Adventure</h1><p class="mut">Đăng nhập phụ huynh</p>
+<div class="box"><input id="em" type="email" placeholder="Email" autocomplete="username">
+<div style="height:10px"></div><input id="pw" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+<div class="err" id="err">${esc(S.err)}</div>
+<button class="p" data-act="login" style="width:100%;margin-top:6px">Đăng nhập</button></div></div>`}
+
+function vPick(){
+  const ps=Object.entries(S.profiles);
+  return `<div class="wrap"><h1 style="text-align:center;margin:18px 0 24px">Who's playing? 🌟</h1>
+<div class="grid">${ps.map(([id,p])=>`<button class="pcard" data-act="who" data-id="${id}"><div class="big">${esc(p.avatar)}</div>${esc(p.name)}</button>`).join('')}</div></div>
+<button class="lock" id="lock" title="Phụ huynh: giữ 3 giây">🔒</button>`}
+
+function vHome(){
+  const p=S.profiles[S.cur]||{avatar:'🐾',name:''};
+  const m=[['🎧','Listen & Tap'],['👀','Look & Say'],['⭐','My Stickers']];
+  return `<div class="wrap"><div class="row" style="justify-content:space-between">
+<button data-act="back" style="font-size:26px">⬅️</button>
+<div style="text-align:center"><span style="font-size:52px">${esc(p.avatar)}</span> <b style="font-size:28px">${esc(p.name)}</b></div><span style="width:60px"></span></div>
+<div class="grid" style="margin-top:28px">${m.map(x=>`<button class="mode" data-act="soon"><small>Soon</small><i>${x[0]}</i>${x[1]}</button>`).join('')}</div></div>`}
+
+/* ===== Giai đoạn 2: quản lý từ vựng ===== */
+const slug=s=>String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+const clean=o=>JSON.parse(JSON.stringify(o));
+const cnt=t=>S.words.filter(w=>w.topic_id===t).length;
+const tname=id=>{const t=S.topics.find(t=>t.id===id);return t?t.name_en:id};
+const TABS=[['kids','Hồ sơ bé'],['words','Từ vựng'],['import','Nhập dữ liệu'],['acct','Tài khoản']];
+
+function permBox(){return `<div class="box" style="background:#ffeaea"><h2>Cần cấp quyền ghi</h2><p>Firebase từ chối ghi dữ liệu. Vào Firebase Console → Realtime Database → Data, tạo nút <b>admins</b> ở gốc, trong đó thêm khóa là UID dưới đây với giá trị <b>true</b>, rồi thử lại.</p><p class="ok">${esc(S.user.uid)}</p></div>`}
+
+function tKids(){
+  const ps=Object.entries(S.profiles);
+  return `<div class="box"><h2>Hồ sơ của bé</h2>
+${ps.map(([id,p])=>`<div class="row" style="margin:8px 0"><span style="font-size:40px">${esc(p.avatar)}</span><b style="flex:1">${esc(p.name)}</b><button data-act="ren" data-id="${id}">Sửa tên</button><button data-act="del" data-id="${id}">Xóa</button></div>`).join('')||'<p>Chưa có hồ sơ nào. Hãy thêm hồ sơ đầu tiên cho bé.</p>'}
+<p style="margin-top:16px"><b>Thêm hồ sơ</b></p>
+<input id="nn" placeholder="Tên bé" value="${esc(S.newName)}">
+<div class="row" style="margin:10px 0">${AV.map(a=>`<button class="av ${a===S.newAv?'sel':''}" data-act="av" data-v="${a}">${a}</button>`).join('')}</div>
+<button class="p" data-act="add">Thêm hồ sơ</button></div>`}
+
+function tAcct(){return `<div class="box"><h2>Tài khoản</h2><p>${esc(S.user.email)}</p>
+<p class="mut">UID (dùng để cấp quyền ghi từ vựng trong nút admins của database):</p><p class="ok">${esc(S.user.uid)}</p>
+<button data-act="out">Đăng xuất</button></div>`}
+
+function editForm(){
+  const w=S.edit>=0?S.words[S.edit]:{},im=arr(w.images);
+  return `<div class="box" style="background:#fff8e6"><h2>${S.edit>=0?'Sửa từ':'Thêm từ'}</h2>
+<input id="ew" placeholder="Từ tiếng Anh" value="${esc(w.word||'')}"><div style="height:8px"></div>
+<select id="et" style="width:100%">${S.topics.map(t=>`<option value="${esc(t.id)}" ${t.id===w.topic_id?'selected':''}>${esc(t.name_en)}</option>`).join('')}</select><div style="height:8px"></div>
+${[0,1,2].map(i=>`<input id="ei${i}" placeholder="Link ảnh ${i+1}${i?' (tùy chọn)':''}" value="${esc(im[i]?im[i].url:'')}"><div style="height:8px"></div>`).join('')}
+<div class="row"><select id="el">${[1,2,3].map(l=>`<option ${l==(w.level||2)?'selected':''}>${l}</option>`).join('')}</select>
+<input id="es" style="flex:1;min-width:200px" placeholder="Đọc chậm (tùy chọn), ví dụ: el... e... phant" value="${esc(w.tts_slow||'')}"></div>
+<div class="row" style="margin-top:10px"><button class="p" data-act="sw">Lưu</button><button data-act="cw">Hủy</button></div></div>`}
+
+function tWords(){
+  if(S.words===null)return '<p>Đang tải...</p>';
+  if(S.err==='perm')return '<div class="box"><p class="err">Firebase từ chối quyền đọc. Dán quy tắc bảo mật (database.rules.json) vào Realtime Database → Rules, bấm Publish rồi Tải lại.</p><button data-act="reload">Tải lại</button></div>';
+  if(S.err)return '<div class="box"><p class="err">Lỗi: '+esc(S.err)+'</p><button data-act="reload">Tải lại</button></div>';
+  const list=S.words.map((w,i)=>[w,i]).filter(x=>!S.tfil||x[0].topic_id===S.tfil);
+  const row=([w,i])=>{
+    const im=imgs(w)[0];
+    return `<div class="row" style="margin:8px 0;opacity:${w.active===false?.5:1}">${im?`<img loading="lazy" src="${esc(tf(im.url))}" alt="" style="width:52px;height:52px;border-radius:10px;object-fit:cover;background:#eee" onerror="this.style.opacity=.25">`:'<div style="width:52px;height:52px;border-radius:10px;background:#eee"></div>'}
+<div style="flex:1"><b>${esc(w.word)}</b><div class="mut">${esc(tname(w.topic_id))} · ${imgs(w).length}/${arr(w.images).length} ảnh</div></div>
+<button data-act="tw" data-i="${i}">${w.active===false?'Hiện':'Ẩn'}</button><button data-act="ew" data-i="${i}">Sửa</button><button data-act="dw" data-i="${i}">Xóa</button></div>`};
+  return `<div class="box"><h2>Topic</h2>
+${S.topics.map((t,i)=>`<div class="row" style="margin:6px 0"><b style="flex:1">${esc(t.name_en)} <span class="mut">(${cnt(t.id)} từ)</span></b><button data-act="tt" data-i="${i}">${t.active===false?'Đang ẩn':'Đang hiện'}</button><button data-act="rt" data-i="${i}">Sửa tên</button></div>`).join('')||'<p>Chưa có topic.</p>'}
+<button data-act="at">+ Thêm topic</button></div>
+<div class="box"><div class="row"><h2 style="flex:1;margin:0">Từ vựng (${list.length})</h2>
+<select id="tfs"><option value="">Tất cả topic</option>${S.topics.map(t=>`<option value="${esc(t.id)}" ${t.id===S.tfil?'selected':''}>${esc(t.name_en)}</option>`).join('')}</select>
+<button class="p" data-act="nw">+ Thêm từ</button></div>
+${S.edit!==null?editForm():''}${list.map(row).join('')||'<p>Chưa có từ nào.</p>'}</div>`}
+
+function impView(m){
+  const ok=m.rows.filter(r=>!r.err.length),bad=m.rows.length-ok.length,nw=ok.filter(r=>r.isNew).length;
+  const bc=(r,i)=>r.ok[i]===true?'#1f9d55':r.ok[i]===false?'#d64545':'#ccc';
+  return `<div class="box"><h2>Xem trước</h2>
+<p>${m.rows.length} dòng: <b>${nw}</b> từ mới, <b>${ok.length-nw}</b> cập nhật, <b style="color:var(--bad)">${bad}</b> lỗi.${m.total?` Kiểm tra ảnh: ${m.done}/${m.total}`:''}</p>
+<button class="p" data-act="doimp" ${ok.length?'':'disabled'}>Nhập ${ok.length} dòng hợp lệ</button>
+${m.rows.map(r=>`<div class="row" style="margin:10px 0;padding-top:10px;border-top:1px solid var(--line)"><b style="min-width:110px">${esc(r.word)||'?'}</b><span class="mut" style="min-width:150px">${esc(r.topic)} · ${r.isNew?'mới':'cập nhật'}</span>
+${r.imgs.map((u,i)=>u?`<img src="${esc(tf(u))}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:3px solid ${bc(r,i)}">`:'').join('')}
+<span class="err" style="margin:0">${esc(r.err.join(', '))}</span><span class="mut">${esc(r.warn.concat(r.ok.some(x=>x===false)?['có ảnh không tải được (sẽ để ẩn)']:[]).join(', '))}</span></div>`).join('')}</div>`}
+
+function tImport(){return `<div class="box"><h2>Nhập từ vựng</h2>
+<p class="mut">Chọn file CSV hoặc JSON. Cột CSV: <b>word, topic, image_url, image_url_2, image_url_3</b> (tùy chọn thêm: level, tts_slow, variants, audio_url). Từ đã có sẽ được cập nhật theo tên từ. Ảnh phải là link đầy đủ trên Cloudinary.</p>
+<input id="fi" type="file" accept=".csv,.json,text/csv,application/json">
+<div class="row" style="margin-top:10px"><button data-act="sample">Tải CSV mẫu</button><button data-act="expo">Xuất dữ liệu hiện có (JSON)</button></div></div>${S.imp?impView(S.imp):''}`}
+
+function vAdmin(){
+  const T={kids:tKids,words:tWords,import:tImport,acct:tAcct};
+  return `<div class="wrap"><div class="row" style="justify-content:space-between"><h1 style="margin:0">Khu vực phụ huynh</h1><button data-act="exit">⬅️ Về màn hình của bé</button></div>
+<div class="row" style="margin:12px 0">${TABS.map(t=>`<button class="${S.tab===t[0]?'p':''}" data-act="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
+${S.perm?permBox():''}${T[S.tab]()}</div>`}
+
+/* ----- Đọc file nhập ----- */
+function csvRows(t,d){
+  const r=[];let row=[],c='',q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===d){row.push(c);c=''}
+    else if(ch==='\n'){row.push(c);r.push(row);row=[];c=''}
+    else if(ch!=='\r')c+=ch;
+  }
+  if(c||row.length){row.push(c);r.push(row)}
+  return r.filter(x=>x.some(y=>y.trim()));
+}
+function fromCsv(t){
+  const f=t.split('\n')[0],d=f.split(';').length>f.split(',').length?';':',';
+  const rows=csvRows(t,d);if(rows.length<2)throw new Error('file không có dữ liệu');
+  const h=rows[0].map(x=>x.trim().toLowerCase()),col=n=>h.indexOf(n);
+  return rows.slice(1).map(r=>{
+    const g=n=>col(n)>-1?(r[col(n)]||'').trim():'';
+    return {word:g('word'),topic:g('topic'),imgs:[g('image_url'),g('image_url_2'),g('image_url_3')],level:parseInt(g('level'))||0,tts:g('tts_slow'),variants:g('variants').split('|').map(x=>x.trim()).filter(Boolean),audio:g('audio_url')};
+  });
+}
+function fromJson(o){
+  const tn={};arr(o.topics).forEach(t=>tn[t.id]=t.name_en);
+  return (Array.isArray(o)?o:arr(o.words)).map(w=>{
+    const im=arr(w.images).map(i=>i.url||'');
+    return {word:w.word||'',topic:w.topic||tn[w.topic_id]||w.topic_id||'',imgs:[im[0]||'',im[1]||'',im[2]||''],level:w.level||0,tts:w.tts_slow||'',variants:arr(w.variants),audio:w.audio_url||''};
+  });
+}
+function prep(rows){
+  const seen={},have={};(S.words||[]).forEach(w=>have[w.id||slug(w.word)]=1);
+  rows.forEach(r=>{
+    r.word=(r.word||'').trim();r.topic=(r.topic||'').trim();r.id=slug(r.word);r.err=[];r.warn=[];r.ok=[null,null,null];
+    if(!r.word)r.err.push('thiếu từ');
+    else if(seen[r.id])r.err.push('trùng trong file');
+    seen[r.id]=1;
+    if(!r.topic)r.err.push('thiếu topic');
+    r.imgs.forEach((u,i)=>{if(u&&!/^https?:\/\//i.test(u)){r.err.push('link ảnh '+(i+1)+' không hợp lệ')}});
+    if(!r.imgs.some(Boolean))r.warn.push('chưa có ảnh');
+    r.isNew=!have[r.id];
+  });
+  return rows;
+}
+const chk=u=>new Promise(res=>{
+  const i=new Image(),t=setTimeout(()=>res(false),8000);
+  i.onload=()=>{clearTimeout(t);res(true)};i.onerror=()=>{clearTimeout(t);res(false)};i.src=tf(u);
+});
+async function checkImgs(){
+  const m=S.imp,jobs=[];
+  m.rows.forEach(r=>r.imgs.forEach((u,i)=>{if(u&&/^https?:\/\//i.test(u))jobs.push([r,i])}));
+  m.total=jobs.length;m.done=0;let k=0;
+  const work=async()=>{while(k<jobs.length&&S.imp===m){const j=jobs[k++];j[0].ok[j[1]]=await chk(j[0].imgs[j[1]]);m.done++;if((m.done%5===0||m.done===m.total)&&S.view==='admin'&&S.tab==='import')render()}};
+  await Promise.all([1,2,3,4,5,6].map(work));
+  if(S.imp===m&&S.view==='admin')render();
+}
+
+/* ----- Lưu lên Firebase ----- */
+async function saveNode(path,data){
+  try{await set(ref(db,path),clean(data));S.perm=false;return true}
+  catch(e){
+    if(/permission/i.test(e.message))S.perm=true;else alert('Không lưu được: '+e.message);
+    S.words=null;await loadWords();render();return false;
+  }
+}
+const saveW=()=>saveNode('words',S.words),saveT=()=>saveNode('topics',S.topics);
+function dl(name,text,type,bom){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([(bom?'\ufeff':'')+text],{type}));
+  a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),500);
+}
+
+function render(){
+  const V={boot:()=>'<div class="wrap" style="text-align:center;margin-top:30vh"><div class="big">🐾</div></div>',login:vLogin,pick:vPick,home:vHome,admin:vAdmin};
+  app.innerHTML=V[S.view]();
+}
+
+/* ---------- Dữ liệu ---------- */
+async function loadProfiles(){
+  try{S.profiles=await val('users/'+S.user.uid+'/profiles')||{}}catch(e){S.profiles={}}
+}
+async function loadWords(){
+  S.err='';
+  try{const r=await Promise.all([val('words'),val('topics')]);S.words=arr(r[0]);S.topics=arr(r[1])}
+  catch(e){S.words=[];S.topics=[];S.err=/permission/i.test(e.message)?'perm':e.message}
+}
+async function go(v){
+  S.view=v;render();
+  if(v==='admin'&&S.words===null){await loadWords();if(S.view==='admin')render()}
+}
+
+/* ---------- Hành động ---------- */
+const act={
+  async login(){
+    const em=document.getElementById('em').value.trim(),pw=document.getElementById('pw').value;
+    document.getElementById('err').textContent='Đang đăng nhập...';
+    try{await signInWithEmailAndPassword(auth,em,pw)}
+    catch(e){
+      const m={'auth/invalid-credential':'Email hoặc mật khẩu chưa đúng','auth/invalid-email':'Email chưa hợp lệ','auth/network-request-failed':'Không có kết nối mạng','auth/too-many-requests':'Thử quá nhiều lần, hãy đợi một lúc'};
+      document.getElementById('err').textContent=m[e.code]||('Lỗi: '+e.code);
+    }
+  },
+  who(d){S.cur=d.id;speak('Hello!');go('home')},
+  back(){S.cur=null;go('pick')},
+  soon(d,el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');speak('Coming soon!')},
+  exit(){go(Object.keys(S.profiles).length?'pick':'admin')},
+  av(d){const n=document.getElementById('nn');S.newName=n?n.value:'';S.newAv=d.v;render()},
+  async add(){
+    const name=document.getElementById('nn').value.trim();
+    if(!name){alert('Hãy nhập tên bé');return}
+    try{
+      const k=push(ref(db,'users/'+S.user.uid+'/profiles')).key;
+      const p={name:name,avatar:S.newAv,created:Date.now(),settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:8,mic:true}};
+      await set(ref(db,'users/'+S.user.uid+'/profiles/'+k),p);
+      S.profiles[k]=p;S.newName='';render();
+    }catch(e){alert('Không lưu được: '+e.message)}
+  },
+  async ren(d){
+    const p=S.profiles[d.id];const n=prompt('Tên mới cho bé:',p.name);
+    if(n&&n.trim()){try{await update(ref(db,'users/'+S.user.uid+'/profiles/'+d.id),{name:n.trim()});p.name=n.trim();render()}catch(e){alert(e.message)}}
+  },
+  async del(d){
+    if(!confirm('Xóa hồ sơ "'+S.profiles[d.id].name+'"? Kết quả học của bé cũng sẽ mất.'))return;
+    try{await remove(ref(db,'users/'+S.user.uid+'/profiles/'+d.id));delete S.profiles[d.id];render()}catch(e){alert(e.message)}
+  },
+  async reload(){S.words=null;render();await loadWords();render()},
+  async out(){await signOut(auth)}
+};
+Object.assign(act,{
+  tab(d){S.tab=d.v;S.edit=null;render()},
+  nw(){S.edit=-1;render()},
+  ew(d){S.edit=+d.i;render()},
+  cw(){S.edit=null;render()},
+  async tw(d){const w=S.words[+d.i];w.active=w.active===false;await saveW();render()},
+  async dw(d){const w=S.words[+d.i];if(!confirm('Xóa từ "'+w.word+'"?'))return;S.words.splice(+d.i,1);await saveW();render()},
+  async tt(d){const t=S.topics[+d.i];t.active=t.active===false;await saveT();render()},
+  async rt(d){const t=S.topics[+d.i],n=prompt('Tên topic mới:',t.name_en);if(n&&n.trim()){t.name_en=n.trim();await saveT();render()}},
+  async at(){
+    const n=prompt('Tên topic mới (tiếng Anh):');if(!n||!n.trim())return;
+    const id=slug(n);if(!id||S.topics.some(t=>t.id===id)){alert('Topic này đã có hoặc tên chưa hợp lệ');return}
+    S.topics.push({id,name_en:n.trim(),icon_word:'',order:S.topics.length+1,wave:0,active:true});await saveT();render();
+  },
+  async sw(){
+    const word=document.getElementById('ew').value.trim(),tid=document.getElementById('et').value;
+    if(!word){alert('Hãy nhập từ tiếng Anh');return}
+    if(!tid){alert('Cần tạo topic trước');return}
+    const u=[0,1,2].map(i=>document.getElementById('ei'+i).value.trim());
+    const lv=+document.getElementById('el').value,ts=document.getElementById('es').value.trim();
+    const old=S.edit>=0?S.words[S.edit]:null,oi=old?arr(old.images):[];
+    const images=[0,1,2].map(i=>({slot:i+1,public_id:(oi[i]&&oi[i].public_id)||'',url:u[i],active:!!u[i]&&!(oi[i]&&oi[i].url===u[i]&&oi[i].active===false)}));
+    if(old)Object.assign(old,{word:word,topic_id:tid,level:lv,tts_slow:ts,images:images});
+    else{
+      const id=slug(word);if(S.words.some(w=>w.id===id)){alert('Từ này đã có');return}
+      S.words.push({id:id,word:word,topic_id:tid,wave:0,level:lv,audio_url:'',tts_slow:ts,variants:[],active:true,images:images});
+    }
+    S.edit=null;if(await saveW())render();
+  },
+  sample(){
+    const u='https://res.cloudinary.com/tgvj8prc/image/upload/';
+    dl('mau-nhap-tu.csv','word,topic,image_url,image_url_2,image_url_3,level,tts_slow,variants\ndog,Pets & Farm Animals,'+u+'v1794906354/dog1.jpg,'+u+'v1794906354/dog2.jpg,,1,,dug|dock\nelephant,Wild Animals,'+u+'v0000000000/elephant1.jpg,,,3,el... e... phant,elefant\nice cream,Food & Drink,'+u+'v0000000000/icecream1.jpg,,,3,ice... cream,\n','text/csv',true);
+  },
+  expo(){dl('words-export.json',JSON.stringify({topics:S.topics,words:S.words},null,1),'application/json',false)},
+  async doimp(){
+    const m=S.imp,good=m.rows.filter(r=>!r.err.length);if(!good.length)return;
+    let add=0,upd=0;
+    good.forEach(r=>{
+      let t=S.topics.find(t=>(t.name_en||'').toLowerCase()===r.topic.toLowerCase()||t.id===slug(r.topic));
+      if(!t){t={id:slug(r.topic)||('t'+Date.now()),name_en:r.topic,icon_word:r.id,order:S.topics.length+1,wave:0,active:true};S.topics.push(t)}
+      const w=S.words.find(x=>(x.id||slug(x.word))===r.id),old=w?arr(w.images):[];
+      const images=[0,1,2].map(i=>{
+        const o=old[i]||{public_id:'',url:'',active:false};
+        if(r.imgs[i])return {slot:i+1,public_id:o.public_id||'',url:r.imgs[i],active:r.ok[i]!==false};
+        return {slot:i+1,public_id:o.public_id||'',url:o.url||'',active:!!o.url&&o.active!==false};
+      });
+      if(w){
+        w.word=r.word;w.topic_id=t.id;w.images=images;
+        if(r.level)w.level=r.level;if(r.tts)w.tts_slow=r.tts;if(r.variants.length)w.variants=r.variants;if(r.audio)w.audio_url=r.audio;
+        upd++;
+      }else{
+        S.words.push({id:r.id,word:r.word,topic_id:t.id,wave:0,level:r.level||2,audio_url:r.audio||'',tts_slow:r.tts||'',variants:r.variants,active:true,images:images});add++;
+      }
     });
-  }).catch(function(e){R.net.db={err:e.message};add('net','Firebase: lỗi '+e.message)});
-  var im=$('img');im.style.display='none';
-  im.onload=function(){R.net.img='tải được';add('net','Cloudinary (ảnh vocab/cat): tải được');im.style.display='block'};
-  im.onerror=function(){R.net.img='không tải được';add('net','Cloudinary (ảnh vocab/cat): chưa tải được (có thể bạn chưa tải ảnh này lên, hoặc sai tên cloud)')};
-  im.src=IMG_URL+'?t='+Date.now();
-}
+    if(await saveT()&&await saveW()){S.imp=null;S.tab='words';render();alert('Đã thêm '+add+' từ mới và cập nhật '+upd+' từ.')}
+  }
+});
+app.addEventListener('change',async e=>{
+  if(e.target.id==='tfs'){S.tfil=e.target.value;render()}
+  if(e.target.id==='fi'&&e.target.files[0]){
+    try{
+      const t=(await e.target.files[0].text()).replace(/^\ufeff/,'');
+      const rows=/^\s*[\[{]/.test(t)?fromJson(JSON.parse(t)):fromCsv(t);
+      S.imp={rows:prep(rows),total:0,done:0};render();checkImgs();
+    }catch(x){alert('Không đọc được file: '+x.message)}
+  }
+});
+app.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(t&&act[t.dataset.act])act[t.dataset.act](t.dataset,t)});
 
-/* Báo cáo */
-function report(){
-  var o={env:R.env,voices:R.voices,ttsVerdict:R.ttsVerdict,tts:R.tts,stt:R.stt,rec:R.rec,ding:R.ding,net:R.net};
-  $('rep').value=JSON.stringify(o,null,1);
-}
-function copyR(){
-  if(!$('rep').value)report();
-  $('rep').select();
-  try{document.execCommand('copy')}catch(e){}
-  if(navigator.clipboard)navigator.clipboard.writeText($('rep').value).catch(function(){});
-}
+/* Giữ nút khóa 3 giây để vào khu phụ huynh */
+let gt=0;
+app.addEventListener('pointerdown',e=>{if(e.target.closest('#lock'))gt=setTimeout(()=>go('admin'),3000)});
+['pointerup','pointercancel','pointerleave'].forEach(n=>app.addEventListener(n,()=>clearTimeout(gt),true));
+
+/* ---------- Khởi động ---------- */
+render();
+onAuthStateChanged(auth,async u=>{
+  S.user=u;S.words=null;
+  if(!u){S.profiles={};S.cur=null;S.err='';go('login');return}
+  await loadProfiles();
+  go(Object.keys(S.profiles).length?'pick':'admin');
+});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
