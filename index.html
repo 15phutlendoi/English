@@ -1176,7 +1176,7 @@ function startSession(mode,topicId,customWordIds=null,opts={}){
   S.sess={
     mode,topicId,presetKey,queue,idx:0,
     totalSec,remSec:totalSec,timeUp:false,
-    // Bậc thang số ảnh 2 -> 4 -> 8
+    // Bậc thang số ảnh 2 -> 4 -> 8 -> 12
     choices:2,consecAtTier:0,streak:0,wrongOnCur:0,hintGlow:false,
     opts:[],locked:false,
     // Học từ mới
@@ -1270,6 +1270,23 @@ function awardStickerToTray(wordObj=null){
 const BUBBLE_BASE='https://res.cloudinary.com/tgvj8prc/image/upload/v1794994026/bubble_',BUBBLE_IMGS=31;
 const BUBBLE_MIX=[[6,170,220],[11,115,155],[17,62,105]];   // [số bong bóng, cỡ nhỏ nhất px, cỡ lớn nhất px] -> lớn, vừa, nhỏ
 let bubSaveT=null,bubSpokeAt=0;
+/* Chỉ đọc phần chữ của tên sticker: bỏ số, dấu _ - #, đuôi file (vd "Bunny 12", "bunny_03.png" -> "Bunny") */
+const stkSpeakName=n=>{
+  let t=String(n==null?'':n).replace(/\.(png|jpe?g|webp|gif|svg)$/i,'').replace(/[0-9０-９]+/g,' ').replace(/[_\-#.:()\[\]]+/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/\s+/g,' ').trim();
+  return t||'Sticker';
+};
+/* Tỷ lệ bong bóng vỡ ra sticker (cài đặt trong Khu vực phụ huynh > Hồ sơ bé). Phần còn lại hiện ảnh từ vựng. Mặc định 20% */
+const bubPctOf=st=>{const v=st&&st.bubbleStickerPct;const n=(v===undefined||v===null||v==='')?20:+v;return Number.isFinite(n)?Math.max(0,Math.min(100,n)):20};
+function nextBubbleWord(layer){
+  if(!layer._bag||!layer._bag.length){
+    const all=(S.words&&S.words.length?S.words:buildDefaultWords()).filter(w=>w.active!==false);
+    let src=((S.sess&&S.sess.queue)||[]).filter(w=>w&&w.active!==false);   // ưu tiên các từ bé vừa học trong lượt này
+    if(src.length<6)src=src.concat([...all].sort(()=>Math.random()-.5).slice(0,12));
+    const seen=new Set();src=src.filter(w=>!seen.has(w.id)&&seen.add(w.id));
+    layer._bag=src.sort(()=>Math.random()-.5);
+  }
+  return layer._bag.pop();
+}
 function clearBubbles(){const l=document.getElementById('bubLayer');if(l)l.remove()}
 function bubPersist(){
   clearTimeout(bubSaveT);
@@ -1329,18 +1346,34 @@ function popBubble(b,layer){
   const r=b.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
   playTing();burst(cx,cy,Math.round(5+r.width/30),['✨','💗','🫧','⭐']);
   setTimeout(()=>b.remove(),300);
-  const stk=awardBubbleSticker();
-  if(stk){
+  const pct=bubPctOf((curProf()||{}).settings);
+  const word=(Math.random()*100<pct)?null:nextBubbleWord(layer);
+  const fade=(el,delay)=>setTimeout(()=>{
+    if(!el.animate){el.remove();return}
+    el.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:'translate(-50%,calc(-50% - 46px)) scale(.8)',opacity:0}],{duration:450,easing:'ease-in',fill:'forwards'}).onfinish=()=>el.remove();
+  },delay);
+  if(word){
+    // ~80%: hiện ảnh từ vựng + đọc từ để bé ghi nhớ thụ động
     const el=document.createElement('div');
-    el.className='bub-stk stk-'+(stk.rarity||'common');
-    el.style.cssText=`left:${cx}px;top:${cy}px`;
-    el.innerHTML=renderStickerThumb(stk,Math.round(Math.max(72,r.width*.85)));
+    const sz=Math.round(Math.max(110,Math.min(r.width*1.05,200)));
+    el.className='bub-stk bub-word';
+    el.style.cssText=`left:${cx}px;top:${cy}px;background:#fff;border:4px solid #fff;box-shadow:0 8px 22px rgba(0,0,0,.2);text-align:center;border-radius:28px`;
+    el.innerHTML=`${renderWordVisual(word,sz)}<div style="font-weight:800;font-size:${Math.max(18,Math.round(sz/6))}px;color:#c2255c;margin-top:2px;font-family:'Andika','Fredoka',sans-serif">${esc(word.word)}</div>`;
     layer.appendChild(el);
-    if(Date.now()-bubSpokeAt>1400){bubSpokeAt=Date.now();speak(stk.name,.92)}
-    setTimeout(()=>{
-      if(!el.animate){el.remove();return}
-      el.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:'translate(-50%,calc(-50% - 46px)) scale(.8)',opacity:0}],{duration:450,easing:'ease-in',fill:'forwards'}).onfinish=()=>el.remove();
-    },1100);
+    if(Date.now()-bubSpokeAt>900){bubSpokeAt=Date.now();speak(word.word,.88)}
+    fade(el,1700);
+  }else{
+    // ~20%: sticker (chỉ đọc phần chữ của tên)
+    const stk=awardBubbleSticker();
+    if(stk){
+      const el=document.createElement('div');
+      el.className='bub-stk stk-'+(stk.rarity||'common');
+      el.style.cssText=`left:${cx}px;top:${cy}px`;
+      el.innerHTML=renderStickerThumb(stk,Math.round(Math.max(72,r.width*.85)));
+      layer.appendChild(el);
+      if(Date.now()-bubSpokeAt>1400){bubSpokeAt=Date.now();speak(stkSpeakName(stk.name),.92)}
+      fade(el,1100);
+    }
   }
   if(!layer.querySelector('.bub:not(.popped)')){                    // đã vỡ hết bong bóng
     setTimeout(()=>{if(S.view==='summary'){playGoldFanfare();spawnConfetti()}},500);
@@ -1364,7 +1397,7 @@ function playLearnVoice(w){
   });
 }
 
-/* ----- Chế độ 2: Nghe - Chạm bậc thang 2 -> 4 -> 8 (Mục 3.4) ----- */
+/* ----- Chế độ 2: Nghe - Chạm bậc thang 2 -> 4 -> 8 -> 12 (Mục 3.4) ----- */
 function prepListenQ(){
   const s=S.sess;
   if(s.idx>=s.queue.length){finishSession(false);return;}
@@ -1392,7 +1425,7 @@ function prepListenQ(){
 function onTapListenOpt(wId){
   const s=S.sess;if(!s||s.locked)return;
   const target=s.queue[s.idx],st=getWStat(target.id);
-  const p=curProf(),maxC=(p&&p.settings&&+p.settings.maxChoices)||8;
+  const p=curProf(),maxC=(p&&p.settings&&+p.settings.maxChoices)||12;
 
   if(wId===target.id){
     s.locked=true;
@@ -1414,6 +1447,9 @@ function onTapListenOpt(wId){
       else if(s.choices===4&&maxC>=8){
         s.consecAtTier++;
         if(s.consecAtTier>=2){s.choices=8;s.consecAtTier=0;}
+      }else if(s.choices===8&&maxC>=12){
+        s.consecAtTier++;
+        if(s.consecAtTier>=2){s.choices=12;s.consecAtTier=0;}
       }
     }else{
       st.assisted++;s.streak=0;
@@ -1439,7 +1475,8 @@ function onTapListenOpt(wId){
     if(remAll.length<=1||s.wrongOnCur>=2)s.hintGlow=true;
 
     // Câu kế tiếp bắt đầu thấp hơn 1 bậc
-    if(s.choices===8)s.choices=4;
+    if(s.choices>=12)s.choices=8;
+    else if(s.choices===8)s.choices=4;
     else if(s.choices===4)s.choices=2;
 
     render();
@@ -1830,17 +1867,18 @@ function vPlay(){
       </div>`;
     }
   }else if(s.mode==='listen'){
-    const cnt=s.opts.length;
-    const cols=cnt<=2?'1fr 1fr':cnt<=4?'1fr 1fr':'repeat(4,1fr)';
-    const px=cnt<=2?185:cnt<=4?135:105;
+    const cnt=s.opts.length,wide=window.innerWidth>window.innerHeight*1.25;
+    const cols=cnt<=4?'1fr 1fr':(cnt>8&&wide)?'repeat(6,1fr)':'repeat(4,1fr)';
+    const rows=cnt<=2?1:cnt<=8?2:(wide?2:3);
+    const px=cnt<=2?185:cnt<=4?135:cnt<=8?105:wide?100:84;
     bodyHTML=`<div style="text-align:center">
       <button class="p" data-act="sayword" data-w="${esc(w.word)}" style="font-size:28px;padding:10px 30px;border-radius:99px;margin-bottom:14px">
         🔊 ${esc(w.word)}
       </button>
-      <div class="opts" style="display:grid;grid-template-columns:${cols};gap:14px;max-width:min(100%,1000px);margin:0 auto;--rows:${cnt<=2?1:2}">
+      <div class="opts" style="display:grid;grid-template-columns:${cols};gap:${cnt>8?10:14}px;max-width:min(100%,1000px);margin:0 auto;--rows:${rows}">
         ${s.opts.map(o=>`<div id="wopt_${esc(o.w.id)}" class="wcard ${o.gone?'gone':''} ${s.hintGlow&&o.w.id===w.id?'hint-glow':''}" data-act="tapopt" data-id="${esc(o.w.id)}">
           ${renderWordVisual(o.w,px)}
-          <div style="font-size:${cnt>4?'20px':'24px'};font-weight:700">${esc(o.w.word)}</div>
+          <div style="font-size:${cnt>8?'17px':cnt>4?'20px':'24px'};font-weight:700">${esc(o.w.word)}</div>
         </div>`).join('')}
       </div>
     </div>`;
@@ -2061,7 +2099,7 @@ function bindSceneDrag(){
     e.preventDefault();
     dragEl=item;dragIdx=+item.dataset.idx;moved=false;
     item.classList.remove('bump');void item.offsetWidth;item.classList.add('bump');
-    playTing();speak(item.dataset.name||'Sticker',.92);
+    playTing();speak(stkSpeakName(item.dataset.name),.92);
   };
   const onMove=e=>{
     if(!dragEl)return;
@@ -2522,7 +2560,7 @@ function tKids(){
   const ps=Object.entries(S.profiles);
   return `${tMascots()}<div class="box"><h2>Hồ sơ của bé & Cài đặt mức chơi (Mục 3.5, 3.7 & 5.2)</h2>
   ${ps.map(([id,p])=>{
-    const st=p.settings||{listenPreset:'easy',speakPreset:'easy',maxChoices:8,speechLenience:'very_easy',micMode:'auto',slowRate:0.6};
+    const st=p.settings||{listenPreset:'easy',speakPreset:'easy',maxChoices:12,speechLenience:'very_easy',micMode:'auto',slowRate:0.6};
     const wStatsMap=p.wordStats||{};
     const wStats=Object.values(wStatsMap);
     const mastered=wStats.filter(x=>x.level>=3).length;
@@ -2556,7 +2594,12 @@ function tKids(){
         </label>
         <label style="width:140px">Bậc ảnh tối đa:
           <select data-act="pset" data-id="${id}" data-k="maxChoices">
-            ${[2,4,8].map(n=>`<option value="${n}" ${(st.maxChoices||8)==n?'selected':''}>${n} ảnh</option>`).join('')}
+            ${[2,4,8,12].map(n=>`<option value="${n}" ${(st.maxChoices||12)==n?'selected':''}>${n} ảnh</option>`).join('')}
+          </select>
+        </label>
+        <label style="width:200px">Bong bóng ra sticker:
+          <select data-act="pset" data-id="${id}" data-k="bubbleStickerPct" title="Phần còn lại bong bóng vỡ ra ảnh từ vựng để bé ghi nhớ">
+            ${[0,10,20,30,40,50,75,100].map(n=>`<option value="${n}" ${bubPctOf(st)==n?'selected':''}>${n}% (còn lại: ảnh từ vựng)</option>`).join('')}
           </select>
         </label>
       </div>
@@ -2919,7 +2962,7 @@ async function loadProfiles(){
       // Tự động khởi tạo hồ sơ mặc định tên Búp khi tài khoản mới đăng nhập lần đầu
       const bup={
         name:'Búp',avatar:'👧',mascot:'princess',created:Date.now(),
-        settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:8,speechLenience:'very_easy',micMode:'auto',slowRate:0.6},
+        settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:12,speechLenience:'very_easy',micMode:'auto',slowRate:0.6},
         stickers:{stk_crown:{got_at:Date.now(),count:1},stk_sheriff:{got_at:Date.now(),count:1}}
       };
       S.profiles={bup_default:bup};
@@ -3091,9 +3134,9 @@ const act={
       if(S.user&&S.cur)update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur+'/stickers'),clean(p.stickers)).catch(()=>{});
     }
     playGoldFanfare();spawnConfetti();render();
-    speak(`Yes! Great job! ${rare.name}!`,.92);
+    speak(`Yes! Great job! ${stkSpeakName(rare.name)}!`,.92);
   },
-  saystk(d,el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');playTing();speak(d.n,.92)},
+  saystk(d,el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');playTing();speak(stkSpeakName(d.n),.92)},
   replaymode(){if(S.sess)startSession(S.sess.mode,S.sess.topicId)},
   goalbum(){playTing();speak('My stickers!',.92);go('album')},
   albtab(d){S.albumTab=d.v;playTing();render()},
@@ -3101,7 +3144,7 @@ const act={
   tapalbstk(d,el){
     const p=curProf(),stk=allStickers().find(x=>x.id===d.id);if(!stk)return;
     el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
-    playTing();speak(stk.name,.92);
+    playTing();speak(stkSpeakName(stk.name),.92);
     if(p&&p.stickers&&p.stickers[stk.id]){
       if(!p.scenes)p.scenes={};
       if(!p.scenes[S.sceneBg])p.scenes[S.sceneBg]=[];
@@ -3124,7 +3167,7 @@ const act={
       const k=push(ref(db,'users/'+S.user.uid+'/profiles')).key;
       const p={
         name,avatar:S.newAv,mascot:'princess',created:Date.now(),
-        settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:8,mic:true},
+        settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:12,mic:true},
         stickers:{stk_crown:{got_at:Date.now(),count:1},stk_sheriff:{got_at:Date.now(),count:1}}
       };
       await set(ref(db,'users/'+S.user.uid+'/profiles/'+k),p);
@@ -3224,7 +3267,7 @@ const act={
   async seedbup(){
     const bup={
       name:'Búp',avatar:'👧',mascot:'princess',created:Date.now(),
-      settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:8,speechLenience:'very_easy',micMode:'auto',slowRate:0.6},
+      settings:{listenPreset:'easy',speakPreset:'easy',maxChoices:12,speechLenience:'very_easy',micMode:'auto',slowRate:0.6},
       stickers:{stk_crown:{got_at:Date.now(),count:1},stk_sheriff:{got_at:Date.now(),count:1}}
     };
     S.profiles['bup_default']=bup;S.dashChild='bup_default';
@@ -3402,7 +3445,7 @@ app.addEventListener('change',async e=>{
   if(e.target.id==='dashTopicSel'){S.dashTopicFilter=e.target.value;render()}
   if(e.target.dataset.act==='pset'){
     const pid=e.target.dataset.id,k=e.target.dataset.k;
-    const numKeys=['maxChoices','listenCustomWords','listenCustomSec','speakCustomWords','speakCustomSec','slowRate'];
+    const numKeys=['maxChoices','bubbleStickerPct','listenCustomWords','listenCustomSec','speakCustomWords','speakCustomSec','slowRate'];
     const v=numKeys.includes(k)?+e.target.value:e.target.value;
     const p=S.profiles[pid];
     if(p){
