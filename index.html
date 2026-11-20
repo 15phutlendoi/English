@@ -165,7 +165,7 @@ input,select,textarea{
   position:relative;overflow:hidden;touch-action:none;
 }
 .scene-item{
-  position:absolute;width:82px;height:82px;transform:translate(-50%,-50%);
+  position:absolute;width:var(--sz,82px);height:var(--sz,82px);transform:translate(-50%,-50%);
   cursor:grab;touch-action:none;user-select:none;transition:transform .1s;
   filter:drop-shadow(0 5px 8px rgba(0,0,0,.18));
 }
@@ -388,6 +388,41 @@ body:has(.wrap.sum){background:linear-gradient(180deg,#dff3ff 0%,#f4ecff 55%,#ff
   .rig .eye{transform-box:fill-box;transform-origin:50% 50%;animation:blink 4.2s infinite}
   .fish .steam{animation:steam 2s ease-in-out infinite}
   .fish .fsh{transform-box:fill-box;transform-origin:50% 100%;animation:fishWait 1.6s ease-in-out infinite}
+}
+
+/* ===== Album sticker: tối ưu iPad xoay ngang ===== */
+.scene-svg{position:absolute;inset:0;width:100%;height:100%}
+.scene-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none}
+.scene-stage.alb-stage{height:clamp(260px,42dvh,560px);flex:1 1 auto;--sz:clamp(72px,12vmin,120px);background:linear-gradient(180deg,#ffd6e0,#f3e8ff)}
+.alb-top{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:6px;flex-wrap:wrap}
+.alb-top h1{margin:0;font-size:clamp(18px,3vmin,28px);white-space:nowrap}
+.alb-back,.alb-clear{min-height:54px;padding:4px 16px;font-size:18px;flex-shrink:0}
+.alb-scenes{display:flex;gap:8px;flex:1;min-width:0;overflow-x:auto;padding:2px 2px 8px;-webkit-overflow-scrolling:touch}
+.alb-scenes button{min-height:50px;padding:4px 16px;font-size:clamp(14px,2.2vmin,18px);flex-shrink:0;display:flex;align-items:center;gap:8px;border-width:4px;border-radius:24px;white-space:nowrap}
+.alb-scenes button .th{width:30px;height:30px;border-radius:9px;object-fit:cover}
+.alb-body{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+.alb-stage-col{display:flex;min-width:0;min-height:0}
+.alb-stage-col .alb-stage{width:100%}
+.alb-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(255,255,255,.88);border-radius:99px;padding:6px 18px;font-size:clamp(13px,2vmin,17px);font-weight:700;color:var(--ink);pointer-events:none;white-space:nowrap}
+.alb-tray{display:flex;flex-direction:column;min-height:0;background:rgba(255,255,255,.88);border-radius:28px;padding:10px;box-shadow:var(--stk)}
+.alb-groups{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.alb-groups button{min-height:46px;padding:4px 14px;font-size:16px;flex-shrink:0;border-width:4px;border-radius:22px}
+.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px;align-content:start;max-height:36dvh}
+.alb-grid .pcard{padding:8px 6px;gap:4px;border-width:4px;align-items:center}
+.alb-nm{font-size:13px;text-align:center;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alb-cnt{position:absolute;top:4px;right:6px;background:#ff6b9d;color:#fff;border-radius:99px;padding:0 7px;font-size:12px;z-index:2}
+@media(orientation:landscape) and (min-width:820px){
+  body:has(.wrap.album) #app{height:100dvh;overflow:hidden}
+  .wrap.album{min-height:0}
+  .alb-top{flex-wrap:nowrap}
+  .alb-body{flex-direction:row}
+  .alb-stage-col{flex:1}
+  .scene-stage.alb-stage{height:auto}
+  .alb-tray{width:clamp(270px,30vw,360px);flex-shrink:0}
+  .alb-grid{grid-template-columns:repeat(3,1fr);flex:1;max-height:none;min-height:0}
+}
+@media(orientation:portrait),(max-width:819px){
+  .alb-scenes{order:3;flex-basis:100%}
 }
 </style>
 </head>
@@ -832,7 +867,7 @@ const PRESETS={
 };
 
 const S={
-  user:null,profiles:{},words:null,topics:null,customStickers:[],
+  user:null,profiles:{},words:null,topics:null,customStickers:[],sceneCfg:{over:{},custom:[]},scan:null,sceneMsg:'',okUrls:new Set(),
   cur:null,view:'boot',err:'',newAv:'🐶',newName:'',
   tab:'dash',edit:null,imp:null,tfil:'',perm:false,cfg:{},gate:null,
   playMode:'learn', // learn | listen | speak
@@ -897,7 +932,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const arr=v=>v?(Array.isArray(v)?v:Object.values(v)).filter(Boolean):[];
 const val=async p=>{const s=await get(ref(db,p));return s.exists()?s.val():null};
 const tf=u=>u&&u.indexOf('res.cloudinary.com')>-1&&u.indexOf('f_auto')<0?u.replace('/upload/','/upload/w_400,f_auto,q_auto/'):(u||'');
-const imgs=w=>arr(w.images).filter(i=>i.url&&i.active!==false);
+const imgs=w=>arr(w.images).filter(i=>i&&i.url&&i.hidden!==true&&!S.brokenUrls.has(i.url));
 const clean=o=>JSON.parse(JSON.stringify(o));
 
 function curProf(){return (S.cur&&S.profiles[S.cur])||null}
@@ -908,55 +943,91 @@ function getWStat(wId){
   return p.wordStats[wId];
 }
 function allStickers(){
-  const fam=arr(S.customStickers).map(x=>({...x,group:'Family'}));
+  const fam=arr(S.customStickers).map(x=>({...x,group:x.group||'Family'}));
   return [...BUILTIN_STICKERS,...fam];
 }
 function renderStickerThumb(stk,size=64){
+  const sz=typeof size==='number'?size+'px':size;
   if(stk.url){
-    return `<div style="width:${size}px;height:${size}px;border-radius:18px;border:4px solid #fff;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12);overflow:hidden;display:flex;align-items:center;justify-content:center">
+    return `<div style="width:${sz};height:${sz};border-radius:18px;border:4px solid #fff;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;box-sizing:border-box">
       <img src="${esc(tf(stk.url))}" style="width:90%;height:90%;object-fit:contain" onerror="this.outerHTML='⭐'">
     </div>`;
   }
-  return `<div style="width:${size}px;height:${size}px;display:inline-block">${makeStickerSVG(stk.bg||'#ffe5ec',stk.accent||'#ff8fab',stk.emoji||'⭐',stk.rarity==='gold'?'#ffd166':'')}</div>`;
+  return `<div style="width:${sz};height:${sz};display:inline-block">${makeStickerSVG(stk.bg||'#ffe5ec',stk.accent||'#ff8fab',stk.emoji||'⭐',stk.rarity==='gold'?'#ffd166':'')}</div>`;
 }
 
 /* ============================================================================
    7. HIỂN THỊ HÌNH ẢNH TỪ VỰNG (CLOUDINARY + DỰ PHÒNG SVG/EMOJI DỄ THƯƠNG)
    ============================================================================ */
-function pickWordImageUrl(w){
-  const activeList=imgs(w);
-  if(!activeList.length)return '';
-  const st=getWStat(w.id);
-  if(activeList.length===1)return activeList[0].url;
-  const idx=((st.lastImage||0)+1)%activeList.length;
-  st.lastImage=idx;
-  return activeList[idx].url;
+/* Xoay vòng ảnh: mỗi lần từ xuất hiện ở một câu mới sẽ lấy ảnh kế tiếp (nhớ theo từng bé),
+   trong cùng một câu thì giữ nguyên ảnh dù màn hình vẽ lại. */
+function imgPickKey(w){
+  const s=S.sess;
+  if(!s)return 'x|'+w.id;
+  return [s.idx,s.mode,s.miniCheck?1:0,s.speakTurn||0,w.id].join('|');
 }
-
+function pickWordImage(w){
+  const list=imgs(w);
+  if(!list.length)return null;
+  if(list.length===1)return list[0];
+  const s=S.sess;
+  const bag=s?(s.imgPick||(s.imgPick={})):(S.imgPickIdle||(S.imgPickIdle={}));
+  const key=imgPickKey(w);
+  if(bag[key]){const f=list.find(i=>i.url===bag[key]);if(f)return f}
+  const st=getWStat(w.id);
+  let idx=((st.lastImage||0)+1)%list.length;
+  if(list[idx].url===st.lastUrl)idx=(idx+1)%list.length;
+  st.lastImage=idx;st.lastUrl=list[idx].url;
+  bag[key]=list[idx].url;
+  return list[idx];
+}
+function imgStartIdx(w){
+  const list=imgs(w);
+  if(list.length<2)return 0;
+  const st=getWStat(w.id);
+  let i=((st.lastImage||0)+1)%list.length;
+  if(list[i].url===st.lastUrl)i=(i+1)%list.length;
+  st.lastImage=i;st.lastUrl=list[i].url;
+  return i;
+}
+function probeImgs(words){
+  const seen=new Set();
+  words.forEach(w=>arr(w.images).forEach(i=>{
+    if(!i||!i.url||seen.has(i.url)||S.okUrls.has(i.url)||S.brokenUrls.has(i.url))return;
+    seen.add(i.url);
+    const im=new Image();
+    im.onload=()=>S.okUrls.add(i.url);
+    im.onerror=()=>S.brokenUrls.add(i.url);
+    im.src=tf(i.url);
+  }));
+}
 function renderWordVisual(w,px=160,forceSlot=null){
   const id=w.id||slug(w.word);
-  const activeList=imgs(w);
-  let url='';
-  if(forceSlot!=null&&activeList[forceSlot])url=activeList[forceSlot].url;
-  else url=pickWordImageUrl(w);
-
+  const list=imgs(w);
+  let img=null;
+  if(forceSlot!=null&&list.length)img=list[forceSlot%list.length];
+  else img=pickWordImage(w);
+  const url=img?img.url:'';
   const art=defaultArt(w,id);
   const fallbackHTML=art.html;
-
-  if(!url||S.brokenUrls.has(url)){
+  if(!url){
     return `<div class="wv" style="--px:${px}px;border-radius:24px;background:${art.bg};display:flex;align-items:center;justify-content:center;margin:0 auto">${fallbackHTML}</div>`;
   }
   const domId='wi_'+id+'_'+Math.random().toString(36).slice(2,7);
   return `<div class="wv" style="--px:${px}px;border-radius:24px;background:#fff8fb;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;overflow:hidden">
-    <img id="${domId}" src="${esc(tf(url))}" alt="${esc(w.word)}" style="width:100%;height:100%;object-fit:contain;padding:6px"
-      onerror="window.__imgErr('${esc(url)}','${domId}')">
+    <img id="${domId}" src="${esc(tf(url))}" alt="${esc(w.word)}" data-u="${esc(url)}" data-w="${esc(id)}" style="width:100%;height:100%;object-fit:contain;padding:6px;transition:opacity .22s"
+      onerror="window.__imgErr(this)">
     <div id="${domId}_fb" data-bg="${art.bg}" style="display:none;width:100%;height:100%;align-items:center;justify-content:center">${fallbackHTML}</div>
   </div>`;
 }
-window.__imgErr=(url,domId)=>{
-  S.brokenUrls.add(url);
-  const im=document.getElementById(domId),fb=document.getElementById(domId+'_fb');
-  if(im)im.style.display='none';
+/* Ảnh lỗi: thử ngay ảnh khác của cùng từ, hết ảnh mới dùng hình vẽ dự phòng */
+window.__imgErr=el=>{
+  S.brokenUrls.add(el.dataset.u);
+  const w=(S.words||[]).find(x=>(x.id||slug(x.word))===el.dataset.w);
+  const alt=w?imgs(w)[0]:null;
+  if(alt){el.dataset.u=alt.url;el.src=tf(alt.url);return}
+  const fb=document.getElementById(el.id+'_fb');
+  el.style.display='none';
   if(fb){fb.style.display='flex';if(fb.dataset.bg&&fb.parentNode)fb.parentNode.style.background=fb.dataset.bg}
 };
 
@@ -1188,6 +1259,7 @@ function startSession(mode,topicId,customWordIds=null,opts={}){
     tray:[],answered:0,firstTryCnt:0,
     boxOpened:false,rareWon:null
   };
+  try{probeImgs(queue.concat(topicId?(S.words||[]).filter(w=>w.topic_id===topicId).slice(0,80):[]))}catch(e){}
   S.view='play';
   beginWithCountdown(opts.say||'');
 }
@@ -1384,8 +1456,8 @@ function popBubble(b,layer){
 function prepLearnCard(){
   const s=S.sess;
   if(s.idx>=s.queue.length){finishSession(false);return;}
-  s.miniCheck=false;s.imgSlide=0;
-  const w=s.queue[s.idx],st=getWStat(w.id);
+  s.miniCheck=false;
+  const w=s.queue[s.idx],st=getWStat(w.id);s.imgSlide=imgStartIdx(w);
   st.seen++;if(!st.level)st.level=1;
   render();
   playLearnVoice(w);
@@ -1988,104 +2060,174 @@ function vSummary(){
 /* ============================================================================
    12. GIAI ĐOẠN 4: ALBUM STICKER & 3 CẢNH NỀN KÉO THẢ (MỤC 4.1 & 4.2)
    ============================================================================ */
+const BUILTIN_SCENES=[
+  {id:'castle',name:'Magic Castle',emoji:'🏰',cls:'p'},
+  {id:'police',name:'Rescue HQ',emoji:'🚓',cls:'mint'},
+  {id:'beach',name:'Sunny Beach',emoji:'🏖️',cls:'gold'}
+];
+function allScenes(){
+  const cfg=S.sceneCfg||{};
+  const base=BUILTIN_SCENES.map(s=>({...s,builtin:true,url:(cfg.over||{})[s.id]||'',fit:'cover'}));
+  const cus=arr(cfg.custom).map(s=>({cls:'sec',emoji:'🖼️',fit:'cover',...s,builtin:false}));
+  return [...base,...cus];
+}
+const tfBig=u=>u&&u.indexOf('res.cloudinary.com')>-1&&u.indexOf('f_auto')<0?u.replace('/upload/','/upload/w_1600,f_auto,q_auto/'):(u||'');
+async function saveSceneCfg(){
+  writeLocalCache({sceneCfg:S.sceneCfg});
+  try{await set(ref(db,'users/'+S.user.uid+'/sceneCfg'),clean(S.sceneCfg))}
+  catch(e){S.pendingSync=true;S.sceneMsg='⚠️ Chưa lưu được lên mạng, đã lưu tạm trên máy.'}
+}
+const chkSmall=u=>new Promise(res=>{
+  const i=new Image(),t=setTimeout(()=>res(false),10000);
+  i.onload=()=>{clearTimeout(t);res(true)};i.onerror=()=>{clearTimeout(t);res(false)};
+  i.src=u.indexOf('res.cloudinary.com')>-1&&u.indexOf('f_auto')<0?u.replace('/upload/','/upload/w_32,f_auto,q_auto/'):u;
+});
+
+/* Tự xoay vòng ảnh trên thẻ "Học từ mới" (mờ chuyển nhẹ, không đọc lại từ) */
+let carTimer=null;
+function stopCarousel(){if(carTimer){clearInterval(carTimer);carTimer=null}}
+function startCarousel(){
+  stopCarousel();
+  const s=S.sess;
+  if(!s||s.mode!=='learn'||s.miniCheck||s.counting)return;
+  const w0=s.queue[s.idx];
+  if(!w0||imgs(w0).length<2)return;
+  try{if(matchMedia('(prefers-reduced-motion:reduce)').matches)return}catch(e){}
+  carTimer=setInterval(()=>{
+    const s2=S.sess;
+    if(!s2||S.view!=='play'||s2.mode!=='learn'||s2.miniCheck){stopCarousel();return}
+    const list=imgs(s2.queue[s2.idx]);
+    if(list.length<2)return;
+    const el=document.querySelector('.learn-card .wv img');
+    if(!el)return;
+    const nx=(s2.imgSlide+1)%list.length,url=list[nx].url,pre=new Image();
+    pre.onload=()=>{
+      if(S.sess!==s2||s2.imgSlide===nx)return;
+      el.style.opacity=0;
+      setTimeout(()=>{
+        el.dataset.u=url;el.src=tf(url);s2.imgSlide=nx;el.style.opacity=1;
+        document.querySelectorAll('.learn-card [data-act="slideimg"]').forEach((d,i)=>{d.style.background=i===nx?'#ff6b9d':'#f3dce6'});
+      },220);
+    };
+    pre.onerror=()=>S.brokenUrls.add(url);
+    pre.src=tf(url);
+  },3200);
+}
+
 function renderSceneBgSVG(bgType){
+  const open='<svg class="scene-svg" viewBox="0 0 800 560" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">';
   if(bgType==='police'){
-    return `<svg viewBox="0 0 800 340" width="100%" height="100%" preserveAspectRatio="none">
-      <rect width="800" height="230" fill="#caf0f8"/>
-      <circle cx="700" cy="60" r="36" fill="#ffd166"/>
-      <rect y="220" width="800" height="120" fill="#90be6d"/>
-      <rect y="255" width="800" height="65" fill="#577590"/>
-      <line x1="0" y1="288" x2="800" y2="288" stroke="#fff" stroke-width="4" stroke-dasharray="28 20"/>
-      <rect x="60" y="95" width="190" height="135" rx="12" fill="#1d3557" stroke="#fff" stroke-width="5"/>
-      <rect x="95" y="65" width="120" height="35" rx="8" fill="#e63946" stroke="#fff" stroke-width="3"/>
-      <text x="155" y="89" font-size="20" fill="#fff" font-weight="bold" text-anchor="middle">POLICE HQ</text>
-      <rect x="130" y="160" width="50" height="70" rx="6" fill="#a8dadc"/>
+    return open+`
+      <rect width="800" height="560" fill="#caf0f8"/>
+      <circle cx="690" cy="92" r="44" fill="#ffd166"/>
+      <g fill="#fff" opacity=".9"><ellipse cx="170" cy="120" rx="62" ry="22"/><ellipse cx="212" cy="108" rx="40" ry="24"/><ellipse cx="500" cy="170" rx="52" ry="19"/></g>
+      <rect y="340" width="800" height="220" fill="#90be6d"/>
+      <rect y="430" width="800" height="100" fill="#577590"/>
+      <line x1="0" y1="480" x2="800" y2="480" stroke="#fff" stroke-width="6" stroke-dasharray="34 22"/>
+      <rect x="70" y="170" width="250" height="190" rx="14" fill="#1d3557" stroke="#fff" stroke-width="6"/>
+      <rect x="110" y="132" width="170" height="44" rx="10" fill="#e63946" stroke="#fff" stroke-width="4"/>
+      <text x="195" y="164" font-size="26" fill="#fff" font-weight="bold" text-anchor="middle">POLICE HQ</text>
+      <rect x="168" y="262" width="54" height="98" rx="8" fill="#a8dadc"/>
+      <rect x="100" y="205" width="46" height="40" rx="6" fill="#a8dadc"/><rect x="244" y="205" width="46" height="40" rx="6" fill="#a8dadc"/>
+      <rect x="560" y="250" width="16" height="100" fill="#8d5b4c"/><circle cx="568" cy="230" r="58" fill="#52b788"/><circle cx="530" cy="262" r="34" fill="#74c69d"/>
     </svg>`;
   }
   if(bgType==='beach'){
-    return `<svg viewBox="0 0 800 340" width="100%" height="100%" preserveAspectRatio="none">
-      <rect width="800" height="185" fill="#90e0ef"/>
-      <circle cx="110" cy="64" r="40" fill="#ffb703"/>
-      <rect y="175" width="800" height="70" fill="#0096c7"/>
-      <path d="M0 235 Q200 215 400 235 T800 235 L800 340 L0 340 Z" fill="#ffefb0"/>
-      <path d="M650 245 Q665 160 640 115" fill="none" stroke="#8d5b4c" stroke-width="14" stroke-linecap="round"/>
-      <path d="M640 115 Q590 105 570 135 M640 115 Q690 95 720 130 M640 115 Q640 70 600 75" fill="none" stroke="#2a9d8f" stroke-width="12" stroke-linecap="round"/>
+    return open+`
+      <rect width="800" height="560" fill="#90e0ef"/>
+      <circle cx="120" cy="96" r="48" fill="#ffb703"/>
+      <g fill="#fff" opacity=".9"><ellipse cx="420" cy="110" rx="64" ry="22"/><ellipse cx="462" cy="98" rx="42" ry="24"/></g>
+      <rect y="270" width="800" height="110" fill="#0096c7"/>
+      <path d="M0 290 Q100 270 200 290 T400 290 T600 290 T800 290" fill="none" stroke="#fff" stroke-width="5" opacity=".6"/>
+      <path d="M0 370 Q200 335 400 370 T800 370 L800 560 L0 560 Z" fill="#ffefb0"/>
+      <path d="M640 400 Q665 290 635 215" fill="none" stroke="#8d5b4c" stroke-width="18" stroke-linecap="round"/>
+      <path d="M635 215 Q575 205 548 245 M635 215 Q700 190 735 240 M635 215 Q640 150 585 155 M635 215 Q690 160 740 170" fill="none" stroke="#2a9d8f" stroke-width="14" stroke-linecap="round"/>
+      <path d="M180 430 L180 360" stroke="#8d5b4c" stroke-width="8"/><path d="M110 365 Q180 300 250 365 Z" fill="#ff6b9d"/>
     </svg>`;
   }
-  // Mặc định: Lâu đài Công chúa (Magic Castle)
-  return `<svg viewBox="0 0 800 340" width="100%" height="100%" preserveAspectRatio="none">
-    <defs>
-      <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffd6e0"/>
-        <stop offset="100%" stop-color="#f3e8ff"/>
-      </linearGradient>
-    </defs>
-    <rect width="800" height="340" fill="url(#skyG)"/>
-    <path d="M120 260 A260 220 0 0 1 680 260" fill="none" stroke="#ff8fab" stroke-width="14" opacity=".45"/>
-    <path d="M140 260 A240 200 0 0 1 660 260" fill="none" stroke="#ffd166" stroke-width="14" opacity=".45"/>
-    <path d="M160 260 A220 180 0 0 1 640 260" fill="none" stroke="#90e0ef" stroke-width="14" opacity=".45"/>
-    <ellipse cx="400" cy="310" rx="460" ry="95" fill="#b7e4c7"/>
-    <rect x="330" y="120" width="140" height="125" rx="10" fill="#ffafcc" stroke="#fff" stroke-width="4"/>
-    <polygon points="320,120 400,55 480,120" fill="#9b72f2" stroke="#fff" stroke-width="4"/>
-    <rect x="375" y="180" width="50" height="65" rx="25" fill="#fff0f6"/>
+  return open+`
+    <defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd6e0"/><stop offset="100%" stop-color="#f3e8ff"/></linearGradient></defs>
+    <rect width="800" height="560" fill="url(#skyG)"/>
+    <circle cx="690" cy="92" r="44" fill="#fff3b0" opacity=".95"/>
+    <g fill="#fff" opacity=".85"><ellipse cx="140" cy="110" rx="62" ry="22"/><ellipse cx="186" cy="98" rx="42" ry="24"/><ellipse cx="560" cy="180" rx="56" ry="20"/><ellipse cx="600" cy="168" rx="36" ry="20"/></g>
+    <path d="M90 450 A310 290 0 0 1 710 450" fill="none" stroke="#ff8fab" stroke-width="18" opacity=".5"/>
+    <path d="M110 450 A290 270 0 0 1 690 450" fill="none" stroke="#ffd166" stroke-width="18" opacity=".5"/>
+    <path d="M130 450 A270 250 0 0 1 670 450" fill="none" stroke="#90e0ef" stroke-width="18" opacity=".5"/>
+    <ellipse cx="400" cy="570" rx="580" ry="190" fill="#b7e4c7"/>
+    <rect x="262" y="300" width="64" height="140" rx="8" fill="#ffc8dd" stroke="#fff" stroke-width="5"/>
+    <rect x="474" y="300" width="64" height="140" rx="8" fill="#ffc8dd" stroke="#fff" stroke-width="5"/>
+    <polygon points="250,300 294,228 338,300" fill="#9b72f2" stroke="#fff" stroke-width="5"/>
+    <polygon points="462,300 506,228 550,300" fill="#9b72f2" stroke="#fff" stroke-width="5"/>
+    <rect x="328" y="270" width="144" height="170" rx="10" fill="#ffafcc" stroke="#fff" stroke-width="5"/>
+    <polygon points="314,270 400,190 486,270" fill="#9b72f2" stroke="#fff" stroke-width="5"/>
+    <line x1="400" y1="190" x2="400" y2="152" stroke="#fff" stroke-width="5"/><polygon points="400,152 432,164 400,176" fill="#ff6b9d"/>
+    <rect x="372" y="356" width="56" height="84" rx="28" fill="#fff0f6"/>
   </svg>`;
+}
+function sceneBgHTML(sc){
+  if(sc&&sc.url){
+    return `<img class="scene-img" src="${esc(tfBig(sc.url))}" alt="" draggable="false" style="object-fit:${sc.fit==='contain'?'contain':'cover'}" onerror="this.style.display='none'">`;
+  }
+  return renderSceneBgSVG(sc?sc.id:'castle');
 }
 
 function vAlbum(){
   const p=curProf()||{stickers:{},scenes:{}};
   const myStks=p.stickers||{};
   const all=allStickers();
-  const groups=['Animal Friends','Princess','Rescue Pups','Sparkle'];
-  if(S.customStickers.length)groups.push('Family');
+  const baseG=['Animal Friends','Princess','Rescue Pups','Sparkle'];
+  const extraG=[...new Set(arr(S.customStickers).map(x=>x.group||'Family'))].filter(g=>!baseG.includes(g));
+  const groups=[...baseG,...extraG];
+  if(!groups.includes(S.albumTab))S.albumTab=groups[0];
 
-  const placed=((p.scenes&&p.scenes[S.sceneBg])||[]);
+  const scenes=allScenes();
+  const sc=scenes.find(x=>x.id===S.sceneBg)||scenes[0];
+  S.sceneBg=sc.id;
+  const placed=((p.scenes&&p.scenes[sc.id])||[]);
   const curList=all.filter(s=>s.group===S.albumTab);
 
-  return `<div class="wrap">
-    <div class="row" style="justify-content:space-between;margin-bottom:10px">
-      <button data-act="gohome" style="font-size:24px">⬅️</button>
-      <h1 style="margin:0;font-size:28px">👑 My Sticker Album</h1>
-      <button data-act="clearscene" style="font-size:16px;padding:8px 14px">🧹 Clear Scene</button>
+  return `<div class="wrap fit album">
+    <div class="alb-top">
+      <button data-act="gohome" class="alb-back">⬅️</button>
+      <h1>👑 My Sticker Album</h1>
+      <div class="alb-scenes">
+        ${scenes.map(s=>`<button class="${s.id===sc.id?(s.cls||'p'):''}" data-act="scenebg" data-v="${esc(s.id)}">
+          ${s.url&&!s.builtin?`<img class="th" src="${esc(tf(s.url))}" alt="" onerror="this.outerHTML='${esc(s.emoji||'🖼️')}'">`:`<span>${esc(s.emoji||'🖼️')}</span>`}${esc(s.name)}</button>`).join('')}
+      </div>
+      <button data-act="clearscene" class="alb-clear">🧹 Clear</button>
     </div>
 
-    <!-- Sân khấu Cảnh nền nơi bé kéo thả Sticker lên (Mục 4.2) -->
-    <div class="box" style="padding:12px">
-      <div class="row" style="justify-content:space-between;margin-bottom:8px">
-        <div class="row" style="gap:8px">
-          <button class="${S.sceneBg==='castle'?'p':''}" data-act="scenebg" data-v="castle" style="min-height:42px;padding:6px 14px">🏰 Magic Castle</button>
-          <button class="${S.sceneBg==='police'?'mint':''}" data-act="scenebg" data-v="police" style="min-height:42px;padding:6px 14px">🚓 Rescue HQ</button>
-          <button class="${S.sceneBg==='beach'?'gold':''}" data-act="scenebg" data-v="beach" style="min-height:42px;padding:6px 14px">🏖️ Sunny Beach</button>
+    <div class="alb-body">
+      <div class="alb-stage-col">
+        <div id="sceneStage" class="scene-stage alb-stage">
+          ${sceneBgHTML(sc)}
+          ${placed.map((item,idx)=>{
+            const stk=all.find(x=>x.id===item.id);
+            if(!stk)return '';
+            return `<div class="scene-item" data-idx="${idx}" data-name="${esc(stk.name)}" style="left:${item.x}%;top:${item.y}%">
+              ${renderStickerThumb(stk,'100%')}
+            </div>`;
+          }).join('')}
+          ${placed.length?'':'<div class="alb-hint">👆 Tap a sticker, then drag it!</div>'}
         </div>
-        <span class="mut" style="font-size:14px">👆 Tap a sticker below to place & drag!</span>
       </div>
 
-      <div id="sceneStage" class="scene-stage">
-        ${renderSceneBgSVG(S.sceneBg)}
-        ${placed.map((item,idx)=>{
-          const stk=all.find(x=>x.id===item.id);
-          if(!stk)return '';
-          return `<div class="scene-item" data-idx="${idx}" data-name="${esc(stk.name)}" style="left:${item.x}%;top:${item.y}%">
-            ${renderStickerThumb(stk,76)}
-          </div>`;
-        }).join('')}
+      <div class="alb-tray">
+        <div class="alb-groups">
+          ${groups.map(g=>`<button class="${S.albumTab===g?'sec':''}" data-act="albtab" data-v="${esc(g)}">${esc(g)}</button>`).join('')}
+        </div>
+        <div class="alb-grid">
+          ${curList.map(stk=>{
+            const owned=myStks[stk.id];
+            const rarityCls=owned?('stk-'+(stk.rarity||'common')):'stk-common';
+            return `<div class="pcard ${rarityCls}" data-act="tapalbstk" data-id="${esc(stk.id)}" style="opacity:${owned?1:.38};filter:${owned?'none':'grayscale(1)'};position:relative">
+              ${owned&&owned.count>1?`<span class="alb-cnt">x${owned.count}</span>`:''}
+              ${renderStickerThumb(stk,'100%')}
+              <div class="alb-nm">${esc(stk.name)}</div>
+            </div>`;
+          }).join('')||'<p class="mut" style="grid-column:1/-1;text-align:center">No stickers here yet</p>'}
+        </div>
       </div>
-    </div>
-
-    <!-- Các bộ Sticker (Ô chưa mở hiện bóng mờ để bé háo hức sưu tập) -->
-    <div class="row" style="margin:12px 0;justify-content:center">
-      ${groups.map(g=>`<button class="${S.albumTab===g?'sec':''}" data-act="albtab" data-v="${esc(g)}" style="min-height:44px;padding:8px 16px">${esc(g)}</button>`).join('')}
-    </div>
-
-    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(135px,1fr))">
-      ${curList.map(stk=>{
-        const owned=myStks[stk.id];
-        const rarityCls=owned?('stk-'+(stk.rarity||'common')):'stk-common';
-        return `<div class="pcard ${rarityCls}" data-act="tapalbstk" data-id="${esc(stk.id)}" style="padding:14px 8px;opacity:${owned?1:.38};filter:${owned?'none':'grayscale(1)'};position:relative">
-          ${owned&&owned.count>1?`<span style="position:absolute;top:8px;right:10px;background:#ff6b9d;color:#fff;border-radius:99px;padding:1px 8px;font-size:12px">x${owned.count}</span>`:''}
-          ${renderStickerThumb(stk,74)}
-          <div style="font-size:16px;text-align:center">${esc(stk.name)}</div>
-        </div>`;
-      }).join('')}
     </div>
   </div>`;
 }
@@ -2351,7 +2493,7 @@ function tDash(){
         ${confusedWords.map(w=>{
           const st=wStatsMap[w.id]||{};
           return `<div class="row" style="background:#fff9fb;padding:6px 10px;border-radius:14px">
-            ${renderWordVisual(w,42)}
+            ${renderWordVisual(w,42,0)}
             <div style="flex:1">
               <b>${esc(w.word)}</b> <span class="mut" style="font-size:13px">(${esc(tname(w.topic_id))})</span>
               <div class="mut" style="font-size:12px">Đúng ngay: <b>${st.firstTry||0}</b> · Cần gỡ rối: <b style="color:#d64545">${st.assisted||0}</b> · Bậc tối đa: <b>${st.maxChoices||2} ảnh</b></div>
@@ -2372,7 +2514,7 @@ function tDash(){
         ${speakPracticeWords.map(w=>{
           const st=wStatsMap[w.id]||{};
           return `<div class="row" style="background:#f8f0fc;padding:6px 10px;border-radius:14px">
-            ${renderWordVisual(w,42)}
+            ${renderWordVisual(w,42,0)}
             <div style="flex:1">
               <b>${esc(w.word)}</b> <span class="mut" style="font-size:13px">${esc(w.tts_slow||'')}</span>
               <div class="mut" style="font-size:12px">Pass sớm: <b>${st.speakPass||0}</b> · Tổng lượt thử mic: <b>${st.speakTries||0}</b></div>
@@ -2461,7 +2603,7 @@ function tDash(){
               revTxt=diffDays<=0?'⚡ Hôm nay':`Còn ${diffDays} ngày`;
             }
             return `<tr>
-              <td><div class="row" style="gap:8px">${renderWordVisual(w,36)} <b>${esc(w.word)}</b></div></td>
+              <td><div class="row" style="gap:8px">${renderWordVisual(w,36,0)} <b>${esc(w.word)}</b></div></td>
               <td class="mut">${esc(tname(w.topic_id))}</td>
               <td><span class="lvl-badge ${m.cls}">${m.title}</span></td>
               <td><b>${st.seen?((st.maxChoices||2)+' ảnh'):'-'}</b></td>
@@ -2662,10 +2804,60 @@ function tKids(){
   </div>`;
 }
 
+function tScenes(){
+  const sc=allScenes(),cus=sc.filter(s=>!s.builtin);
+  const prev=s=>`<div style="width:176px;height:99px;border-radius:14px;overflow:hidden;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.14);flex-shrink:0;position:relative;background:linear-gradient(180deg,#ffd6e0,#f3e8ff)">
+    ${s.url?`<img src="${esc(tfBig(s.url))}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:${s.fit==='contain'?'contain':'cover'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:13px;color:#c0392b;text-align:center;padding:6px">Không tải được ảnh. Kiểm tra lại link.</div>`:(s.builtin?renderSceneBgSVG(s.id):'')}
+  </div>`;
+  const fitSel=(id,v)=>`<select id="${id}" style="width:150px"><option value="cover" ${v!=='contain'?'selected':''}>Phủ kín khung</option><option value="contain" ${v==='contain'?'selected':''}>Hiện đủ ảnh</option></select>`;
+  return `<div class="box">
+    <h2>🖼️ Ảnh chủ đề (cảnh nền) cho Album sticker</h2>
+    <p class="mut">Dán link ảnh Cloudinary (hoặc tên file ngắn) để thay hình vẽ mặc định, hoặc thêm cảnh nền mới. Nên dùng ảnh <b>ngang 16:9</b> (khoảng 1600×900) để lấp đầy khung trên iPad xoay ngang. Bé sẽ thấy ngay trên tab chọn cảnh của Album.</p>
+    ${S.sceneMsg?`<p class="ok" style="font-weight:700">${esc(S.sceneMsg)}</p>`:''}
+    <h3 style="margin:14px 0 6px;font-size:17px">Ba cảnh có sẵn</h3>
+    ${sc.filter(s=>s.builtin).map(s=>`<div class="row" style="gap:12px;margin:8px 0;align-items:center">
+      ${prev(s)}
+      <div style="width:120px;font-weight:700">${s.emoji} ${esc(s.name)}</div>
+      <input id="sci_${s.id}" value="${esc(s.url)}" placeholder="Link ảnh nền (để trống = dùng hình vẽ mặc định)" style="flex:1;min-width:200px">
+      <button class="p" data-act="savescene" data-id="${s.id}" style="min-height:44px;padding:6px 16px">Lưu</button>
+    </div>`).join('')}
+    <h3 style="margin:18px 0 6px;font-size:17px">Cảnh nền thêm mới (${cus.length})</h3>
+    ${cus.map((s,i)=>`<div class="row" style="gap:10px;margin:8px 0;align-items:center">
+      ${prev(s)}
+      <input id="scm_${i}" value="${esc(s.emoji||'')}" style="width:64px;text-align:center" placeholder="🖼️">
+      <input id="scn_${i}" value="${esc(s.name)}" style="width:150px" placeholder="Tên cảnh">
+      <input id="scu_${i}" value="${esc(s.url)}" style="flex:1;min-width:180px" placeholder="Link ảnh">
+      ${fitSel('scf_'+i,s.fit)}
+      <button class="p" data-act="updscene" data-i="${i}" style="min-height:44px;padding:6px 14px">Lưu</button>
+      <button data-act="delscene" data-i="${i}" style="min-height:44px;padding:6px 14px">Xóa</button>
+    </div>`).join('')||'<p class="mut">Chưa có cảnh nào. Thêm ở dưới.</p>'}
+    <div class="row" style="gap:10px;margin-top:14px;align-items:flex-end">
+      <label style="width:80px">Biểu tượng<input id="nse" placeholder="🌈" style="text-align:center"></label>
+      <label style="width:170px">Tên cảnh<input id="nsn" placeholder="Rainbow Land"></label>
+      <label style="flex:1;min-width:220px">Link ảnh nền<input id="nsu" placeholder="https://res.cloudinary.com/…/rainbow.jpg"></label>
+      <label style="width:160px">Cách hiển thị${fitSel('nsf','cover')}</label>
+      <button class="p" data-act="addscene">+ Thêm cảnh</button>
+    </div>
+  </div>`;
+}
+function scanBox(){
+  const sc=S.scan;
+  const tot=S.words.reduce((n,w)=>n+arr(w.images).filter(i=>i&&i.url).length,0);
+  return `<div class="box">
+    <div class="row" style="justify-content:space-between;gap:12px">
+      <div><h2 style="margin:0">🔎 Kiểm tra ảnh Cloudinary</h2>
+      <p class="mut" style="margin:4px 0 0">Quét ${tot} link ảnh để tìm ảnh chưa upload hoặc sai tên. Kết quả được lưu vào từng ảnh.</p></div>
+      <button id="scanBtn" class="p" data-act="scanimgs">${sc&&sc.running?`Đang quét ${sc.done}/${sc.total}…`:'🔎 Quét ngay'}</button>
+    </div>
+    ${sc&&!sc.running&&sc.total?`<p class="ok" style="font-weight:700;margin:10px 0 4px">✅ Có ${sc.okN}/${sc.total} ảnh hiển thị được${sc.miss.length?`, thiếu ${sc.miss.length} ảnh:`:'.'}</p>
+    ${sc.miss.length?`<textarea readonly style="width:100%;height:96px;font-size:14px">${esc(sc.miss.join(', '))}</textarea>`:''}`:''}
+  </div>`;
+}
+
 function tStickers(){
   const fam=arr(S.customStickers);
   const batches={};fam.forEach(x=>{if(x.batch)(batches[x.batch]=batches[x.batch]||[]).push(x)});
-  return `<div class="box">
+  return `${tScenes()}<datalist id="grpList">${['Animal Friends','Princess','Rescue Pups','Sparkle','Family',...new Set(fam.map(x=>x.group||'Family'))].filter((g,i,a)=>a.indexOf(g)===i).map(g=>`<option value="${esc(g)}">`).join('')}</datalist><div class="box">
     <h2>⚡ Thêm sticker hàng loạt từ Cloudinary</h2>
     <p class="mut">Link mỗi sticker = <b>thư mục</b> + <b>tên file</b> + <b>số</b> + <b>đuôi</b>. Chỉ cần khai số bắt đầu và số kết thúc, app tự tạo từng sticker (ví dụ <b>Skye_1.png</b> đến <b>Skye_108.png</b>). Chạy lại cùng dải số sẽ không bị trùng.</p>
     <div class="row" style="gap:10px;align-items:flex-end">
@@ -2678,6 +2870,7 @@ function tStickers(){
     <div class="row" style="gap:10px;align-items:flex-end;margin-top:10px">
       <label style="flex:1;min-width:180px">Tên hiển thị (để trống = lấy theo tên file)<input id="bkn" placeholder="Skye"></label>
       <label style="width:160px">Độ hiếm<select id="bkr"><option value="common">Thường</option><option value="sparkle">Lấp lánh</option><option value="gold">Vàng hiếm</option></select></label>
+      <label style="width:170px">Nhóm trong Album<input id="bkg" list="grpList" placeholder="Family" value="Family"></label>
       <button class="p" data-act="addbulk">⚡ Thêm hàng loạt</button>
     </div>
     ${S.bulkMsg?`<p class="ok" style="margin:10px 0 0;font-weight:700">${esc(S.bulkMsg)}</p>`:''}
@@ -2694,6 +2887,7 @@ function tStickers(){
     <div class="row">
       <input id="csn" placeholder="Tên sticker tiếng Anh (VD: Super Bup)" style="flex:1;min-width:180px">
       <input id="csu" placeholder="Link ảnh Cloudinary hoặc tên file ngắn" style="flex:2;min-width:220px">
+      <input id="csg" list="grpList" placeholder="Nhóm (VD: Family)" style="width:150px">
       <select id="csr" style="width:140px">
         <option value="sparkle">Lấp lánh</option>
         <option value="gold">Vàng hiếm</option>
@@ -2735,12 +2929,12 @@ function tWords(){
   const list=S.words.map((w,i)=>[w,i]).filter(x=>!S.tfil||x[0].topic_id===S.tfil);
   const row=([w,i])=>{
     return `<div class="row" style="margin:8px 0;opacity:${w.active===false?.5:1}">
-      ${renderWordVisual(w,52)}
+      ${renderWordVisual(w,52,0)}
       <div style="flex:1"><b>${esc(w.word)}</b><div class="mut">${esc(tname(w.topic_id))} · ${imgs(w).length}/${arr(w.images).length} ảnh</div></div>
       <button data-act="tw" data-i="${i}">${w.active===false?'Hiện':'Ẩn'}</button><button data-act="ew" data-i="${i}">Sửa</button><button data-act="dw" data-i="${i}">Xóa</button>
     </div>`;
   };
-  return `<div class="box">
+  return `${scanBox()}<div class="box">
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">Topic (${S.topics.length})</h2>
       ${!S.words.length?`<button class="gold" data-act="seed104">✨ Nạp 13 Topic & 104 Từ mẫu</button>`:''}
@@ -2751,7 +2945,7 @@ function tWords(){
   <div class="box"><div class="row"><h2 style="flex:1;margin:0">Từ vựng (${list.length})</h2>
   <select id="tfs" style="width:auto"><option value="">Tất cả topic</option>${S.topics.map(t=>`<option value="${esc(t.id)}" ${t.id===S.tfil?'selected':''}>${esc(t.name_en)}</option>`).join('')}</select>
   <button class="p" data-act="nw">+ Thêm từ</button></div>
-  ${S.edit!==null?editForm():''}${list.map(row).join('')||'<p>Chưa có từ nào.</p>'}</div>`;
+  ${S.edit!==null?editForm():''}${(S.tfil?list:list.slice(0,60)).map(row).join('')||'<p>Chưa có từ nào.</p>'}${!S.tfil&&list.length>60?`<p class="mut" style="text-align:center">Đang hiện 60/${list.length} từ đầu. Chọn một topic ở trên để xem đầy đủ.</p>`:''}</div>`;
 }
 
 function impView(m){
@@ -2925,6 +3119,7 @@ function render(){
   if(S.view!=='summary')clearBubbles();
   app.innerHTML=(V[S.view]||vHome)();
   if(S.view==='album')bindSceneDrag();
+  stopCarousel();if(S.view==='play')startCarousel();
   bindLockLongPress();
 }
 
@@ -2974,6 +3169,7 @@ async function loadProfiles(){
   }
   try{S.cfg=await val('users/'+S.user.uid+'/settings')||cache.cfg||{};writeLocalCache({cfg:S.cfg});}catch(e){S.cfg=cache.cfg||{}}
   try{S.customStickers=arr(await val('users/'+S.user.uid+'/customStickers'));writeLocalCache({customStickers:S.customStickers});}catch(e){S.customStickers=arr(cache.customStickers)}
+  try{const sc=(await val('users/'+S.user.uid+'/sceneCfg'))||cache.sceneCfg||{};S.sceneCfg={over:sc.over||{},custom:arr(sc.custom)};writeLocalCache({sceneCfg:S.sceneCfg});}catch(e){const sc=cache.sceneCfg||{};S.sceneCfg={over:sc.over||{},custom:arr(sc.custom)}}
 }
 async function loadWords(){
   S.err='';
@@ -3141,6 +3337,57 @@ const act={
   goalbum(){playTing();speak('My stickers!',.92);go('album')},
   albtab(d){S.albumTab=d.v;playTing();render()},
   scenebg(d){S.sceneBg=d.v;playTing();render()},
+  async savescene(d){
+    const v=ex(document.getElementById('sci_'+d.id).value.trim());
+    if(!S.sceneCfg.over)S.sceneCfg.over={};
+    if(v)S.sceneCfg.over[d.id]=v;else delete S.sceneCfg.over[d.id];
+    S.sceneMsg='✅ Đã lưu cảnh nền.';await saveSceneCfg();render();
+  },
+  async addscene(){
+    const g=id=>document.getElementById(id);
+    const name=g('nsn').value.trim(),url=ex(g('nsu').value.trim());
+    if(!name||!url){S.sceneMsg='⚠️ Cần nhập tên cảnh và link ảnh.';render();return}
+    if(!Array.isArray(S.sceneCfg.custom))S.sceneCfg.custom=arr(S.sceneCfg.custom);
+    S.sceneCfg.custom.push({id:'scn_'+Date.now(),name,emoji:g('nse').value.trim()||'🖼️',url,fit:g('nsf').value});
+    S.sceneMsg='✅ Đã thêm cảnh "'+name+'".';await saveSceneCfg();render();
+  },
+  async updscene(d){
+    const g=id=>document.getElementById(id),i=+d.i,s=arr(S.sceneCfg.custom)[i];if(!s)return;
+    const name=g('scn_'+i).value.trim(),url=ex(g('scu_'+i).value.trim());
+    if(!name||!url){S.sceneMsg='⚠️ Cần nhập tên cảnh và link ảnh.';render();return}
+    Object.assign(s,{name,url,emoji:g('scm_'+i).value.trim()||'🖼️',fit:g('scf_'+i).value});
+    S.sceneCfg.custom=arr(S.sceneCfg.custom);
+    S.sceneMsg='✅ Đã lưu cảnh "'+name+'".';await saveSceneCfg();render();
+  },
+  async delscene(d){
+    const list=arr(S.sceneCfg.custom),s=list[+d.i];if(!s||!confirm('Xóa cảnh "'+s.name+'"?'))return;
+    list.splice(+d.i,1);S.sceneCfg.custom=list;
+    if(S.sceneBg===s.id)S.sceneBg='castle';
+    S.sceneMsg='';await saveSceneCfg();render();
+  },
+  async scanimgs(){
+    if(S.scan&&S.scan.running)return;
+    const jobs=[];
+    S.words.forEach(w=>arr(w.images).forEach(im=>{if(im&&im.url)jobs.push(im)}));
+    S.scan={running:true,done:0,total:jobs.length,okN:0,miss:[]};
+    const btn=()=>document.getElementById('scanBtn');
+    if(btn())btn().textContent='Đang quét 0/'+jobs.length+'…';
+    let k=0;
+    const work=async()=>{
+      while(k<jobs.length){
+        const im=jobs[k++],ok=await chkSmall(im.url);
+        im.active=ok;
+        if(ok){S.okUrls.add(im.url);S.brokenUrls.delete(im.url);S.scan.okN++}
+        else{S.brokenUrls.add(im.url);S.scan.miss.push(im.public_id||im.url.split('/').pop())}
+        S.scan.done++;
+        if(S.scan.done%25===0&&btn())btn().textContent='Đang quét '+S.scan.done+'/'+S.scan.total+'…';
+      }
+    };
+    await Promise.all(Array.from({length:8},work));
+    S.scan.running=false;
+    await saveW();
+    render();
+  },
   tapalbstk(d,el){
     const p=curProf(),stk=allStickers().find(x=>x.id===d.id);if(!stk)return;
     el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
@@ -3187,7 +3434,7 @@ const act={
     const rarity=document.getElementById('csr').value;
     if(!name||!rawU)return;
     const url=ex(rawU);
-    const stk={id:'fam_'+Date.now(),name,url,rarity,group:'Family'};
+    const stk={id:'fam_'+Date.now(),name,url,rarity,group:(document.getElementById('csg').value.trim()||'Family')};
     S.customStickers.push(stk);
     // Mở khóa luôn cho các hồ sơ của bé
     Object.entries(S.profiles).forEach(([pid,pr])=>{
@@ -3203,7 +3450,7 @@ const act={
     let base=g('bkb').value.trim();if(base&&base.slice(-1)!=='/')base+='/';
     const pre=g('bkp').value.trim(),ext=g('bkx').value.trim().replace(/^\./,'')||'png';
     const from=parseInt(g('bka').value,10),to=parseInt(g('bkz').value,10);
-    const label=g('bkn').value.trim()||pre.replace(/[_\-\s]+$/,''),rarity=g('bkr').value;
+    const label=g('bkn').value.trim()||pre.replace(/[_\-\s]+$/,''),rarity=g('bkr').value,grp=(g('bkg')&&g('bkg').value.trim())||'Family';
     if(!/^https?:\/\//i.test(base)||!pre||!(from>=0)||!(to>=from)){S.bulkMsg='⚠️ Kiểm tra lại: thư mục (https://…), tên file, và số bắt đầu ≤ số kết thúc.';render();return}
     if(to-from>=500){S.bulkMsg='⚠️ Mỗi lần thêm tối đa 500 sticker.';render();return}
     const key=pre.replace(/[.#$\[\]\/\s]/g,'-');
@@ -3212,7 +3459,7 @@ const act={
     for(let n=from;n<=to;n++){
       const url=`${base}${pre}${n}.${ext}`;
       if(have.has(url)){skipped++;continue}
-      S.customStickers.push({id:`bulk_${key}${n}`,name:`${label} ${n}`,url,rarity,group:'Family',batch:pre});
+      S.customStickers.push({id:`bulk_${key}${n}`,name:`${label} ${n}`,url,rarity,group:grp,batch:pre});
       added++;
     }
     writeLocalCache({customStickers:S.customStickers});
@@ -3395,7 +3642,7 @@ self.addEventListener('fetch',e=>{
     const u=[0,1,2].map(i=>ex(document.getElementById('ei'+i).value.trim()));
     const lv=+document.getElementById('el').value,ts=document.getElementById('es').value.trim();
     const old=S.edit>=0?S.words[S.edit]:null,oi=old?arr(old.images):[];
-    const images=[0,1,2].map(i=>({slot:i+1,public_id:(oi[i]&&oi[i].public_id)||'',url:u[i],active:!!u[i]&&!(oi[i]&&oi[i].url===u[i]&&oi[i].active===false)}));
+    const images=[0,1,2].map(i=>({slot:i+1,public_id:(oi[i]&&oi[i].public_id)||'',url:u[i],active:!!u[i]}));
     if(old)Object.assign(old,{word,topic_id:tid,level:lv,tts_slow:ts,images});
     else{
       const id=slug(word);if(S.words.some(w=>w.id===id))return;
@@ -3417,7 +3664,7 @@ self.addEventListener('fetch',e=>{
         const o=old[i]||{public_id:'',url:'',active:false};
         const miss=r.auto&&r.auto[i]&&r.ok[i]===false;
         if(r.imgs[i]&&!miss)return {slot:i+1,public_id:o.public_id||'',url:r.imgs[i],active:r.ok[i]!==false};
-        return {slot:i+1,public_id:o.public_id||'',url:o.url||'',active:!!o.url&&o.active!==false};
+        return {slot:i+1,public_id:o.public_id||'',url:o.url||'',active:!!o.url};
       });
       if(w){
         w.word=r.word;w.topic_id=t.id;w.images=images;
