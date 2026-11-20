@@ -101,8 +101,8 @@ input,select,textarea{
 @keyframes floatSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .float{animation:floatSlow 3s ease-in-out infinite}
 @keyframes pulseHint{
-  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,184,48,.9),0 0 25px 8px rgba(255,184,48,.75);border-color:#ffb830}
-  50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(255,184,48,0),0 0 38px 16px rgba(255,107,157,.85);border-color:#ff6b9d}
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,184,48,.6),0 0 20px 6px rgba(255,200,120,.55);border-color:#ffc766}
+  50%{transform:scale(1.035);box-shadow:0 0 0 10px rgba(255,184,48,0),0 0 28px 10px rgba(255,140,190,.6);border-color:#ff9cc2}
 }
 .hint-glow{animation:pulseHint 1.05s ease-in-out infinite !important;z-index:10}
 @keyframes wiggleBox{
@@ -128,15 +128,6 @@ input,select,textarea{
   background:linear-gradient(135deg,#fff6cc 0%,#ffd86b 50%,#ffb03a 100%);
   border:3px solid #fff;box-shadow:0 0 18px rgba(255,184,48,.75);
 }
-@keyframes flyToTray{
-  0%{transform:scale(1.3) translate(0,0);opacity:1}
-  100%{transform:scale(.35) translate(320px,-180px);opacity:.15}
-}
-.fly-stk{
-  position:fixed;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;
-  z-index:99;pointer-events:none;animation:flyToTray .5s cubic-bezier(.22,1,.36,1) forwards;
-}
-
 /* Word Choice Cards */
 .wcard{
   background:#fff;border:5px solid #fff;border-radius:28px;padding:12px;
@@ -173,12 +164,15 @@ input,select,textarea{
 
 /* Confetti */
 .confetti{
-  position:fixed;top:-20px;width:12px;height:18px;border-radius:4px;z-index:80;pointer-events:none;
-  animation:fallConfetti 2.6s linear forwards;
+  position:fixed;top:-30px;z-index:80;pointer-events:none;line-height:1;opacity:0;
+  animation:fallConfetti 3s ease-in-out forwards;
 }
 @keyframes fallConfetti{
-  0%{transform:translateY(0) rotate(0);opacity:1}
-  100%{transform:translateY(105vh) rotate(540deg);opacity:0}
+  0%{transform:translate(0,0) rotate(0);opacity:0}
+  12%{opacity:1}
+  50%{transform:translate(18px,52vh) rotate(25deg)}
+  85%{opacity:.9}
+  100%{transform:translate(-10px,105vh) rotate(-20deg);opacity:0}
 }
 
 /* ===== Giai đoạn 5: Chế độ Nhìn – Nói (Miệng hoạt hình & Sóng âm Micro) ===== */
@@ -322,7 +316,8 @@ body:has(.wrap.play) #bgFx{display:none}
   .learn-card .wv,.speak-card .wv{animation:popIn .5s cubic-bezier(.34,1.56,.64,1) backwards}
   .opts .wcard{animation:popIn .45s cubic-bezier(.34,1.56,.64,1) backwards}
   .opts .wcard:nth-child(2){animation-delay:.06s}.opts .wcard:nth-child(3){animation-delay:.12s}.opts .wcard:nth-child(4){animation-delay:.18s}.opts .wcard:nth-child(n+5){animation-delay:.24s}
-  #trayList>div:first-child{animation:popIn .5s cubic-bezier(.34,1.56,.64,1) backwards}
+  .tray-new{animation:popIn .45s cubic-bezier(.34,1.56,.64,1) .5s backwards}
+  .wrap.play.still .opts .wcard,.wrap.play.still .learn-card .wv,.wrap.play.still .speak-card .wv{animation:none}
   button[data-act="nextlearn"]{animation:glowPulse 2.2s ease-in-out infinite}
 }
 
@@ -934,6 +929,9 @@ const val=async p=>{const s=await get(ref(db,p));return s.exists()?s.val():null}
 const tf=u=>u&&u.indexOf('res.cloudinary.com')>-1&&u.indexOf('f_auto')<0?u.replace('/upload/','/upload/w_400,f_auto,q_auto/'):(u||'');
 const imgs=w=>arr(w.images).filter(i=>i&&i.url&&i.hidden!==true&&!S.brokenUrls.has(i.url));
 const clean=o=>JSON.parse(JSON.stringify(o));
+/* Từ chơi được: từ đang bật VÀ topic của nó đang bật (topic bị ẩn thì mọi từ của topic không xuất hiện ở bất kỳ đâu trong phần chơi của bé) */
+const hiddenTopic=id=>(S.topics||[]).some(t=>t.id===id&&t.active===false);
+const playable=w=>!!w&&w.active!==false&&!hiddenTopic(w.topic_id);
 
 function curProf(){return (S.cur&&S.profiles[S.cur])||null}
 function getWStat(wId){
@@ -946,9 +944,10 @@ function allStickers(){
   const fam=arr(S.customStickers).map(x=>({...x,group:x.group||'Family'}));
   return [...BUILTIN_STICKERS,...fam];
 }
-function renderStickerThumb(stk,size=64){
+function renderStickerThumb(stk,size=64,plain=false){
   const sz=typeof size==='number'?size+'px':size;
   if(stk.url){
+    if(plain)return `<div style="width:${sz};height:${sz};display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 6px rgba(120,50,90,.28))"><img src="${esc(tf(stk.url))}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='⭐'"></div>`;
     return `<div style="width:${sz};height:${sz};border-radius:18px;border:4px solid #fff;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;box-sizing:border-box">
       <img src="${esc(tf(stk.url))}" style="width:90%;height:90%;object-fit:contain" onerror="this.outerHTML='⭐'">
     </div>`;
@@ -1177,8 +1176,8 @@ function vTopics(){
    10. GIAI ĐOẠN 3: THUẬT TOÁN CHỌN TỪ, ĐỒNG HỒ CHÚ CHÓ CHẠY & 3 CHẾ ĐỘ HỌC
    ============================================================================ */
 function buildSessionQueue(topicId,count){
-  let pool=(S.words||[]).filter(w=>w.active!==false&&(topicId==='surprise'||w.topic_id===topicId));
-  if(!pool.length)pool=(S.words||[]).filter(w=>w.active!==false);
+  let pool=(S.words||[]).filter(w=>playable(w)&&(topicId==='surprise'||w.topic_id===topicId));
+  if(!pool.length)pool=(S.words||[]).filter(playable);
   if(!pool.length)pool=buildDefaultWords();
 
   const now=Date.now(),newW=[],dueW=[],famW=[];
@@ -1317,18 +1316,31 @@ function awardStickerToTray(wordObj=null){
   if(!p.stickers[stk.id])p.stickers[stk.id]={got_at:Date.now(),count:1};
   else p.stickers[stk.id].count=(p.stickers[stk.id].count||1)+1;
 
-  // Hiệu ứng bay 0.5 giây vào khay cạnh màn hình (không chặn thao tác chạm)
+  // Sticker bay từ ô vừa chọn xuống khay (đường cong nhẹ, chỉ hình sticker, không khung)
   const fx=document.getElementById('fxLayer');
-  if(fx){
-    const el=document.createElement('div');
-    el.className='fly-stk';
-    el.innerHTML=renderStickerThumb(stk,76);
-    fx.appendChild(el);
-    setTimeout(()=>el.remove(),520);
-  }
   const trayEl=document.getElementById('trayList');
+  const srcEl=(wordObj&&document.getElementById('wopt_'+wordObj.id))||document.querySelector('.speak-card,.learn-card');
+  if(fx&&trayEl&&srcEl&&!calm&&srcEl.animate){
+    const a=srcEl.getBoundingClientRect(),t=trayEl.getBoundingClientRect();
+    const sz=64,x0=a.left+a.width/2-sz/2,y0=a.top+a.height/2-sz/2;
+    const x1=t.left+Math.min(t.width,60)/2-sz/2+8,y1=t.top+t.height/2-sz/2;
+    const el=document.createElement('div');
+    el.style.cssText=`position:fixed;left:${x0}px;top:${y0}px;width:${sz}px;height:${sz}px;pointer-events:none;will-change:transform,opacity`;
+    el.innerHTML=renderStickerThumb(stk,sz,true);
+    fx.appendChild(el);
+    const dx=x1-x0,dy=y1-y0;
+    const an=el.animate([
+      {transform:'translate(0,0) scale(.5)',opacity:0},
+      {transform:'translate(0,0) scale(1.15)',opacity:1,offset:.22},
+      {transform:`translate(${dx*.55}px,${dy*.55-36}px) scale(.95)`,opacity:1,offset:.7},
+      {transform:`translate(${dx}px,${dy}px) scale(.6)`,opacity:.9}
+    ],{duration:620,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+    an.onfinish=()=>el.remove();
+    setTimeout(()=>el.remove(),900);
+  }
   if(trayEl){
     const d=document.createElement('div');
+    d.className='tray-new';
     d.innerHTML=renderStickerThumb(stk,52);
     trayEl.prepend(d);
   }
@@ -1351,8 +1363,8 @@ const stkSpeakName=n=>{
 const bubPctOf=st=>{const v=st&&st.bubbleStickerPct;const n=(v===undefined||v===null||v==='')?20:+v;return Number.isFinite(n)?Math.max(0,Math.min(100,n)):20};
 function nextBubbleWord(layer){
   if(!layer._bag||!layer._bag.length){
-    const all=(S.words&&S.words.length?S.words:buildDefaultWords()).filter(w=>w.active!==false);
-    let src=((S.sess&&S.sess.queue)||[]).filter(w=>w&&w.active!==false);   // ưu tiên các từ bé vừa học trong lượt này
+    const all=(S.words&&S.words.length?S.words:buildDefaultWords()).filter(playable);
+    let src=((S.sess&&S.sess.queue)||[]).filter(playable);   // ưu tiên các từ bé vừa học trong lượt này
     if(src.length<6)src=src.concat([...all].sort(()=>Math.random()-.5).slice(0,12));
     const seen=new Set();src=src.filter(w=>!seen.has(w.id)&&seen.add(w.id));
     layer._bag=src.sort(()=>Math.random()-.5);
@@ -1476,7 +1488,7 @@ function prepListenQ(){
   const target=s.queue[s.idx];
   s.wrongOnCur=0;s.hintGlow=false;s.locked=false;
   const n=s.choices;
-  const allW=(S.words&&S.words.length?S.words:buildDefaultWords()).filter(w=>w.active!==false&&w.id!==target.id);
+  const allW=(S.words&&S.words.length?S.words:buildDefaultWords()).filter(w=>playable(w)&&w.id!==target.id);
   let pool=[];
   if(n<=2){
     // Bậc thấp lấy khác topic để bé dễ phân biệt
@@ -2002,16 +2014,17 @@ function vPlay(){
    11. MÀN TỔNG KẾT LƯỢT CHƠI, PHÁO GIẤY & 3 HỘP QUÀ BÍ ẨN (MỤC 4.2 & 4.3)
    ============================================================================ */
 function spawnConfetti(){
-  const fx=document.getElementById('fxLayer');if(!fx)return;
-  const cols=['#ff6b9d','#ffb830','#3ec1d3','#9b72f2','#2ecc71'];
-  for(let i=0;i<36;i++){
-    const c=document.createElement('div');
+  const fx=document.getElementById('fxLayer');if(!fx||calm)return;
+  const g=['🌸','💗','⭐','🎀','✨','🌷'];
+  for(let i=0;i<18;i++){
+    const c=document.createElement('span');
     c.className='confetti';
-    c.style.left=Math.random()*100+'vw';
-    c.style.background=cols[i%cols.length];
-    c.style.animationDelay=(Math.random()*.7)+'s';
+    c.textContent=g[i%g.length];
+    c.style.left=(4+Math.random()*92)+'vw';
+    c.style.fontSize=(18+Math.random()*14)+'px';
+    c.style.animationDelay=(Math.random()*.9)+'s';
     fx.appendChild(c);
-    setTimeout(()=>c.remove(),3200);
+    setTimeout(()=>c.remove(),3600);
   }
 }
 
@@ -3119,6 +3132,11 @@ function render(){
   if(S.view!=='summary')clearBubbles();
   app.innerHTML=(V[S.view]||vHome)();
   if(S.view==='album')bindSceneDrag();
+  if(S.view==='play'&&S.sess){
+    const k=[S.sess.idx,S.sess.mode,S.sess.miniCheck?1:0,S.sess.speakTurn||0,S.sess.counting?1:0].join('|');
+    const w=app.querySelector('.wrap.play');
+    if(w&&k===S.lastQKey)w.classList.add('still');else S.lastQKey=k;
+  }
   stopCarousel();if(S.view==='play')startCarousel();
   bindLockLongPress();
 }
@@ -3243,7 +3261,7 @@ const act={
     if(!s.miniCheck&&(s.idx+1)%3===0){
       s.miniCheck=true;
       const target=s.queue[s.idx];
-      const other=(S.words||[]).filter(w=>w.id!==target.id&&w.active!==false);
+      const other=(S.words||[]).filter(w=>w.id!==target.id&&playable(w));
       const dist=other[Math.floor(Math.random()*other.length)]||s.queue[0];
       s.miniOpts=[target,dist].sort(()=>Math.random()-.5);
       render();speak(target.word,.88);
@@ -3739,7 +3757,6 @@ function burst(x,y,n=5,glyphs=['⭐','💗','✨','🌸']){
     fx.appendChild(e);setTimeout(()=>e.remove(),800);
   }
 }
-app.addEventListener('pointerdown',e=>{if(!e.target.closest('input,select,textarea,[data-hold]'))burst(e.clientX,e.clientY,5)});
 new MutationObserver(()=>{
   app.querySelectorAll('.correct-flash:not([data-b])').forEach(el=>{
     el.dataset.b='1';const r=el.getBoundingClientRect();
