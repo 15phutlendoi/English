@@ -385,39 +385,55 @@ body:has(.wrap.sum){background:linear-gradient(180deg,#dff3ff 0%,#f4ecff 55%,#ff
   .fish .fsh{transform-box:fill-box;transform-origin:50% 100%;animation:fishWait 1.6s ease-in-out infinite}
 }
 
-/* ===== Album sticker: tối ưu iPad xoay ngang ===== */
+/* ===== Album sticker v2: ảnh nền full khung, dải sticker cuộn ngang ở dưới ===== */
+:root{--alb-sz:clamp(64px,12vmin,120px)}
 .scene-svg{position:absolute;inset:0;width:100%;height:100%}
 .scene-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none}
-.scene-stage.alb-stage{height:clamp(260px,42dvh,560px);flex:1 1 auto;--sz:clamp(72px,12vmin,120px);background:linear-gradient(180deg,#ffd6e0,#f3e8ff)}
-.alb-top{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:6px;flex-wrap:wrap}
+body:has(.wrap.album) #app{height:100dvh;overflow:hidden}
+.wrap.album{min-height:0;gap:10px}
+.alb-top{display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:nowrap}
 .alb-top h1{margin:0;font-size:clamp(18px,3vmin,28px);white-space:nowrap}
-.alb-back,.alb-clear{min-height:54px;padding:4px 16px;font-size:18px;flex-shrink:0}
-.alb-scenes{display:flex;gap:8px;flex:1;min-width:0;overflow-x:auto;padding:2px 2px 8px;-webkit-overflow-scrolling:touch}
-.alb-scenes button{min-height:50px;padding:4px 16px;font-size:clamp(14px,2.2vmin,18px);flex-shrink:0;display:flex;align-items:center;gap:8px;border-width:4px;border-radius:24px;white-space:nowrap}
+.alb-back,.alb-clear{min-height:50px;padding:2px 16px;font-size:18px;flex-shrink:0}
+.alb-scenes{position:relative;display:flex;gap:8px;flex:1;min-width:0;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.alb-scenes::-webkit-scrollbar,.alb-groups::-webkit-scrollbar,.alb-strip::-webkit-scrollbar{display:none}
+.alb-scenes button{min-height:48px;padding:4px 16px;font-size:clamp(14px,2.2vmin,18px);flex-shrink:0;display:flex;align-items:center;gap:8px;border-width:4px;border-radius:24px;white-space:nowrap}
 .alb-scenes button .th{width:30px;height:30px;border-radius:9px;object-fit:cover}
-.alb-body{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
-.alb-stage-col{display:flex;min-width:0;min-height:0}
-.alb-stage-col .alb-stage{width:100%}
-.alb-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(255,255,255,.88);border-radius:99px;padding:6px 18px;font-size:clamp(13px,2vmin,17px);font-weight:700;color:var(--ink);pointer-events:none;white-space:nowrap}
-.alb-tray{display:flex;flex-direction:column;min-height:0;background:rgba(255,255,255,.88);border-radius:28px;padding:10px;box-shadow:var(--stk)}
-.alb-groups{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;flex-shrink:0;-webkit-overflow-scrolling:touch}
-.alb-groups button{min-height:46px;padding:4px 14px;font-size:16px;flex-shrink:0;border-width:4px;border-radius:22px}
-.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px;align-content:start;max-height:36dvh}
-.alb-grid .pcard{padding:8px 6px;gap:4px;border-width:4px;align-items:center}
-.alb-nm{font-size:13px;text-align:center;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.alb-cnt{position:absolute;top:4px;right:6px;background:#ff6b9d;color:#fff;border-radius:99px;padding:0 7px;font-size:12px;z-index:2}
-@media(orientation:landscape) and (min-width:820px){
-  body:has(.wrap.album) #app{height:100dvh;overflow:hidden}
-  .wrap.album{min-height:0}
-  .alb-top{flex-wrap:nowrap}
-  .alb-body{flex-direction:row}
-  .alb-stage-col{flex:1}
-  .scene-stage.alb-stage{height:auto}
-  .alb-tray{width:clamp(270px,30vw,360px);flex-shrink:0}
-  .alb-grid{grid-template-columns:repeat(3,1fr);flex:1;max-height:none;min-height:0}
+
+/* Ảnh nền chiếm toàn bộ bề ngang, cao hết phần còn lại */
+.alb-stage-col{flex:1 1 0;min-height:140px;min-width:0;display:flex;align-items:center;justify-content:center}
+.scene-stage.alb-stage{flex:1;width:100%;height:auto;min-height:0;--sz:var(--alb-sz);background:linear-gradient(180deg,#ffd6e0,#f3e8ff);transition:box-shadow .15s}
+.scene-stage.alb-stage.hot{box-shadow:0 0 0 5px var(--pri),0 0 28px rgba(255,156,194,.75)}
+/* Khung 16:9 lớn nhất có thể: thấy trọn ảnh nền (ảnh chủ đề khuyến nghị 1600×900), không bị cắt */
+@supports (width:1cqw){
+  .alb-stage-col{container-type:size}
+  .scene-stage.alb-stage{flex:none;width:min(100cqw,calc(100cqh*16/9));height:min(100cqh,calc(100cqw*9/16))}
 }
+.alb-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:99px;padding:7px 20px;font-size:clamp(13px,2vmin,17px);font-weight:700;color:var(--ink);pointer-events:none;white-space:nowrap}
+.scene-item.going,.scene-item.going:active{opacity:.45;transform:translate(-50%,-50%) scale(.8)}
+@keyframes albDrop{0%{transform:translate(-50%,-50%) scale(1.35)}60%{transform:translate(-50%,-50%) scale(.92)}100%{transform:translate(-50%,-50%) scale(1)}}
+@media(prefers-reduced-motion:no-preference){.scene-item.drop{animation:albDrop .38s}}
+
+/* Dock dưới cùng: nhóm sticker + dải sticker cuộn ngang */
+.alb-dock{position:relative;flex-shrink:0;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.93);border:5px solid #fff;border-radius:30px;padding:8px 6px 4px;box-shadow:var(--stk);transition:background .15s}
+.alb-dock.armed{background:#fff3f7;outline:3px dashed var(--cut);outline-offset:-3px}
+.alb-dock.trash::after{content:"🗑️ Drop here to remove";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:25px;background:rgba(255,214,226,.96);font-weight:700;font-size:clamp(16px,2.6vmin,22px);color:var(--ink)}
+.alb-groups{display:flex;gap:8px;overflow-x:auto;padding:2px 10px 4px;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.alb-groups button{min-height:40px;padding:2px 14px;font-size:15px;flex-shrink:0;border-width:3px;border-radius:20px;white-space:nowrap}
+.alb-strip{--th:clamp(52px,9vmin,80px);display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:6px 22px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 34px),transparent);mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 34px),transparent)}
+.alb-strip .pcard{position:relative;flex:0 0 auto;width:calc(var(--th) + 34px);padding:6px 5px;gap:3px;border-width:4px;align-items:center;font-size:13px;scroll-snap-align:start;touch-action:pan-x;cursor:grab}
+.alb-strip .pcard.lifted{opacity:.3!important}
+.alb-nm{font-size:12px;text-align:center;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alb-cnt{position:absolute;top:2px;right:4px;background:#ff6b9d;color:#fff;border-radius:99px;padding:0 7px;font-size:12px;z-index:2}
+.alb-ghost{position:fixed;left:0;top:0;z-index:120;pointer-events:none;width:var(--alb-sz);height:var(--alb-sz);transform:translate(-50%,-50%) scale(1.12) rotate(-4deg);filter:drop-shadow(0 14px 14px rgba(120,50,90,.35))}
 @media(orientation:portrait),(max-width:819px){
+  .alb-top{flex-wrap:wrap}
   .alb-scenes{order:3;flex-basis:100%}
+}
+@media(max-height:520px){
+  .alb-top h1{display:none}
+  .alb-groups button{min-height:34px}
+  .alb-strip{--th:48px}
 }
 </style>
 </head>
@@ -2128,7 +2144,7 @@ function startCarousel(){
 }
 
 function renderSceneBgSVG(bgType){
-  const open='<svg class="scene-svg" viewBox="0 0 800 560" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">';
+  const open='<svg class="scene-svg" viewBox="0 40 800 450" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">';
   if(bgType==='police'){
     return open+`
       <rect width="800" height="560" fill="#caf0f8"/>
@@ -2197,7 +2213,9 @@ function vAlbum(){
   const sc=scenes.find(x=>x.id===S.sceneBg)||scenes[0];
   S.sceneBg=sc.id;
   const placed=((p.scenes&&p.scenes[sc.id])||[]);
+  /* sticker đã có lên trước để bé khỏi phải cuộn qua các ô còn khóa */
   const curList=all.filter(s=>s.group===S.albumTab);
+  const curSorted=[...curList.filter(s=>myStks[s.id]),...curList.filter(s=>!myStks[s.id])];
 
   return `<div class="wrap fit album">
     <div class="alb-top">
@@ -2210,80 +2228,187 @@ function vAlbum(){
       <button data-act="clearscene" class="alb-clear">🧹 Clear</button>
     </div>
 
-    <div class="alb-body">
-      <div class="alb-stage-col">
-        <div id="sceneStage" class="scene-stage alb-stage">
-          ${sceneBgHTML(sc)}
-          ${placed.map((item,idx)=>{
-            const stk=all.find(x=>x.id===item.id);
-            if(!stk)return '';
-            return `<div class="scene-item" data-idx="${idx}" data-name="${esc(stk.name)}" style="left:${item.x}%;top:${item.y}%">
-              ${renderStickerThumb(stk,'100%')}
-            </div>`;
-          }).join('')}
-          ${placed.length?'':'<div class="alb-hint">👆 Tap a sticker, then drag it!</div>'}
-        </div>
+    <div class="alb-stage-col">
+      <div id="sceneStage" class="scene-stage alb-stage">
+        ${sceneBgHTML(sc)}
+        ${placed.map((item,idx)=>{
+          const stk=all.find(x=>x.id===item.id);
+          if(!stk)return '';
+          return `<div class="scene-item" data-idx="${idx}" data-name="${esc(stk.name)}" style="left:${item.x}%;top:${item.y}%">
+            ${renderStickerThumb(stk,'100%')}
+          </div>`;
+        }).join('')}
+        ${placed.length?'':'<div class="alb-hint">👆 Drag a sticker up onto the picture!</div>'}
       </div>
+    </div>
 
-      <div class="alb-tray">
-        <div class="alb-groups">
-          ${groups.map(g=>`<button class="${S.albumTab===g?'sec':''}" data-act="albtab" data-v="${esc(g)}">${esc(g)}</button>`).join('')}
-        </div>
-        <div class="alb-grid">
-          ${curList.map(stk=>{
-            const owned=myStks[stk.id];
-            const rarityCls=owned?('stk-'+(stk.rarity||'common')):'stk-common';
-            return `<div class="pcard ${rarityCls}" data-act="tapalbstk" data-id="${esc(stk.id)}" style="opacity:${owned?1:.38};filter:${owned?'none':'grayscale(1)'};position:relative">
-              ${owned&&owned.count>1?`<span class="alb-cnt">x${owned.count}</span>`:''}
-              ${renderStickerThumb(stk,'100%')}
-              <div class="alb-nm">${esc(stk.name)}</div>
-            </div>`;
-          }).join('')||'<p class="mut" style="grid-column:1/-1;text-align:center">No stickers here yet</p>'}
-        </div>
+    <div class="alb-dock" id="albDock">
+      <div class="alb-groups">
+        ${groups.map(g=>`<button class="${S.albumTab===g?'sec':''}" data-act="albtab" data-v="${esc(g)}">${esc(g)}</button>`).join('')}
+      </div>
+      <div class="alb-strip" id="albStrip">
+        ${curSorted.map(stk=>{
+          const owned=myStks[stk.id];
+          const rarityCls=owned?('stk-'+(stk.rarity||'common')):'stk-common';
+          return `<div class="pcard ${rarityCls}" data-act="tapalbstk" data-id="${esc(stk.id)}" style="opacity:${owned?1:.38};filter:${owned?'none':'grayscale(1)'}">
+            ${owned&&owned.count>1?`<span class="alb-cnt">x${owned.count}</span>`:''}
+            ${renderStickerThumb(stk,'var(--th)')}
+            <div class="alb-nm">${esc(stk.name)}</div>
+          </div>`;
+        }).join('')||'<p class="mut" style="margin:10px auto;text-align:center">No stickers here yet</p>'}
       </div>
     </div>
   </div>`;
 }
 
+/* ----- Album: lưu, đặt, xóa sticker & kéo thả ----- */
+function albSave(){
+  const p=curProf();
+  if(p&&S.user&&S.cur)update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur+'/scenes'),clean(p.scenes||{})).catch(()=>{});
+}
+function albList(){
+  const p=curProf();if(!p)return null;
+  if(!p.scenes)p.scenes={};
+  return p.scenes[S.sceneBg]||(p.scenes[S.sceneBg]=[]);
+}
+/* dán sticker mới lên ảnh nền (không vẽ lại cả màn, giữ nguyên vị trí cuộn của dải sticker) */
+function albStamp(id,x,y){
+  const stage=document.getElementById('sceneStage'),stk=allStickers().find(s=>s.id===id),list=albList();
+  if(!stage||!stk||!list)return;
+  list.push({id,x:Math.round(x),y:Math.round(y)});
+  const el=document.createElement('div');
+  el.className='scene-item drop';el.dataset.idx=list.length-1;el.dataset.name=stk.name;
+  el.style.left=x+'%';el.style.top=y+'%';
+  el.innerHTML=renderStickerThumb(stk,'100%');
+  stage.appendChild(el);
+  const h=stage.querySelector('.alb-hint');if(h)h.remove();
+  albSave();
+}
+function albReindex(stage,k,newIdx){
+  stage.querySelectorAll('.scene-item').forEach(el=>{
+    const i=+el.dataset.idx;
+    if(i===k)el.dataset.idx=newIdx;else if(i>k)el.dataset.idx=i-1;
+  });
+}
+let albBound=false,albDrag=null,albMove=null;
+function albPct(stage,cx,cy){
+  const r=stage.getBoundingClientRect();
+  return {
+    inside:cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom,
+    x:Math.max(8,Math.min(92,((cx-r.left)/r.width)*100)),
+    y:Math.max(12,Math.min(88,((cy-r.top)/r.height)*100))
+  };
+}
+const albOver=(el,cx,cy)=>{if(!el)return false;const r=el.getBoundingClientRect();return cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom};
+
 function bindSceneDrag(){
   const stage=document.getElementById('sceneStage');if(!stage)return;
-  let dragEl=null,dragIdx=-1,moved=false;
+  const dock=document.getElementById('albDock'),strip=document.getElementById('albStrip'),scenesEl=document.querySelector('.alb-scenes'),groupsEl=document.querySelector('.alb-groups');
 
-  const onDown=e=>{
+  /* giữ nguyên vị trí cuộn của 3 dải sau mỗi lần vẽ lại */
+  if(strip)strip.scrollLeft=S.albScroll||0;
+  if(groupsEl)groupsEl.scrollLeft=S.albGroupScroll||0;
+  if(scenesEl){
+    if(S.albSceneScroll==null){
+      const a=scenesEl.querySelector('button.p,button.mint,button.gold,button.sec');
+      if(a)scenesEl.scrollLeft=Math.max(0,a.offsetLeft-(scenesEl.clientWidth-a.offsetWidth)/2);
+    }else scenesEl.scrollLeft=S.albSceneScroll;
+  }
+  if(strip)strip.addEventListener('scroll',()=>{S.albScroll=strip.scrollLeft},{passive:true});
+  if(groupsEl)groupsEl.addEventListener('scroll',()=>{S.albGroupScroll=groupsEl.scrollLeft},{passive:true});
+  if(scenesEl)scenesEl.addEventListener('scroll',()=>{S.albSceneScroll=scenesEl.scrollLeft},{passive:true});
+
+  /* ① Kéo sticker từ dải dưới lên ảnh nền */
+  if(strip)strip.addEventListener('pointerdown',e=>{
+    const card=e.target.closest('.pcard');if(!card)return;
+    const p=curProf();
+    if(!(p&&p.stickers&&p.stickers[card.dataset.id]))return; // sticker còn khóa: chỉ nghe tên
+    albDrag={card,id:card.dataset.id,x0:e.clientX,y0:e.clientY,pid:e.pointerId,type:e.pointerType,ghost:null,gx:0,gy:0};
+  });
+
+  /* ② Kéo sticker đã dán để đổi chỗ, hoặc thả xuống dock để bỏ */
+  stage.addEventListener('pointerdown',e=>{
     const item=e.target.closest('.scene-item');if(!item)return;
     e.preventDefault();
-    dragEl=item;dragIdx=+item.dataset.idx;moved=false;
-    item.classList.remove('bump');void item.offsetWidth;item.classList.add('bump');
+    const list=albList();if(!list)return;
+    const k=+item.dataset.idx;if(!list[k])return;
+    /* đưa lên trên cùng */
+    if(k!==list.length-1){list.push(list.splice(k,1)[0]);albReindex(stage,k,list.length-1)}
+    stage.appendChild(item);
+    try{item.setPointerCapture(e.pointerId)}catch(_){}
+    albMove={el:item,pid:e.pointerId,moved:false};
     playTing();speak(stkSpeakName(item.dataset.name),.92);
+  });
+  stage.addEventListener('pointermove',e=>{
+    const m=albMove;if(!m||e.pointerId!==m.pid)return;
+    e.preventDefault();
+    m.moved=true;
+    const pt=albPct(stage,e.clientX,e.clientY);
+    m.el.style.left=pt.x+'%';m.el.style.top=pt.y+'%';
+    const list=albList(),it=list&&list[+m.el.dataset.idx];
+    if(it){it.x=Math.round(pt.x);it.y=Math.round(pt.y)}
+    const d=document.getElementById('albDock');
+    if(d){
+      d.classList.add('armed');
+      const over=albOver(d,e.clientX,e.clientY);
+      d.classList.toggle('trash',over);m.el.classList.toggle('going',over);m.over=over;
+    }
+  });
+  const endMove=e=>{
+    const m=albMove;if(!m||e.pointerId!==m.pid)return;
+    albMove=null;
+    const d=document.getElementById('albDock');
+    if(d)d.classList.remove('armed','trash');
+    if(m.over&&e.type==='pointerup'){
+      const list=albList(),k=+m.el.dataset.idx;
+      if(list&&list[k]){list.splice(k,1);m.el.remove();albReindex(stage,k,-1)}
+      albSave();return;
+    }
+    m.el.classList.remove('going');
+    if(m.moved)albSave();
   };
-  const onMove=e=>{
-    if(!dragEl)return;
-    moved=true;
-    const pt=e.touches?e.touches[0]:e;
-    const r=stage.getBoundingClientRect();
-    const x=Math.max(8,Math.min(92,((pt.clientX-r.left)/r.width)*100));
-    const y=Math.max(12,Math.min(88,((pt.clientY-r.top)/r.height)*100));
-    dragEl.style.left=x+'%';dragEl.style.top=y+'%';
-    const p=curProf();
-    if(p&&p.scenes&&p.scenes[S.sceneBg]&&p.scenes[S.sceneBg][dragIdx]){
-      p.scenes[S.sceneBg][dragIdx].x=Math.round(x);
-      p.scenes[S.sceneBg][dragIdx].y=Math.round(y);
+  stage.addEventListener('pointerup',endMove);
+  stage.addEventListener('pointercancel',endMove);
+
+  if(albBound)return;
+  albBound=true;
+  window.addEventListener('pointermove',e=>{
+    const d=albDrag;if(!d||e.pointerId!==d.pid)return;
+    const dx=e.clientX-d.x0,dy=e.clientY-d.y0;
+    if(!d.ghost){
+      if(Math.hypot(dx,dy)<8)return;
+      /* cảm ứng: vuốt ngang = cuộn dải (trình duyệt tự xử lý), vuốt lên = nhấc sticker */
+      if(d.type!=='mouse'&&Math.abs(dx)>Math.abs(dy)*1.2){albDrag=null;return}
+      const stk=allStickers().find(s=>s.id===d.id);if(!stk){albDrag=null;return}
+      const g=document.createElement('div');
+      g.className='alb-ghost';g.innerHTML=renderStickerThumb(stk,'100%');
+      document.body.appendChild(g);
+      d.ghost=g;d.card.classList.add('lifted');
+      d.lift=d.type==='mouse'?0:48; // ngón tay không che sticker
+    }
+    e.preventDefault();
+    d.gx=e.clientX;d.gy=e.clientY-d.lift;
+    d.ghost.style.left=d.gx+'px';d.ghost.style.top=d.gy+'px';
+    const st=document.getElementById('sceneStage');
+    if(st)st.classList.toggle('hot',albPct(st,d.gx,d.gy).inside);
+  },{passive:false});
+  const endDrag=e=>{
+    const d=albDrag;if(!d||e.pointerId!==d.pid)return;
+    albDrag=null;
+    if(!d.ghost)return; // chỉ chạm: để sự kiện click xử lý
+    S.albSuppress=Date.now();
+    d.ghost.remove();d.card.classList.remove('lifted');
+    const st=document.getElementById('sceneStage');
+    if(st)st.classList.remove('hot');
+    if(e.type!=='pointerup'||!st)return;
+    const pt=albPct(st,d.gx,d.gy);
+    if(pt.inside){
+      const stk=allStickers().find(s=>s.id===d.id);
+      albStamp(d.id,pt.x,pt.y);playTing();if(stk)speak(stkSpeakName(stk.name),.92);
     }
   };
-  const onUp=()=>{
-    if(!dragEl)return;
-    dragEl=null;
-    const p=curProf();
-    if(moved&&p&&S.user&&S.cur){
-      update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur+'/scenes'),clean(p.scenes||{})).catch(()=>{});
-    }
-  };
-  stage.addEventListener('mousedown',onDown);
-  stage.addEventListener('mousemove',onMove);
-  window.addEventListener('mouseup',onUp,{once:false});
-  stage.addEventListener('touchstart',onDown,{passive:false});
-  stage.addEventListener('touchmove',onMove,{passive:false});
-  stage.addEventListener('touchend',onUp);
+  window.addEventListener('pointerup',endDrag);
+  window.addEventListener('pointercancel',endDrag);
 }
 
 /* ============================================================================
@@ -3353,7 +3478,7 @@ const act={
   saystk(d,el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');playTing();speak(stkSpeakName(d.n),.92)},
   replaymode(){if(S.sess)startSession(S.sess.mode,S.sess.topicId)},
   goalbum(){playTing();speak('My stickers!',.92);go('album')},
-  albtab(d){S.albumTab=d.v;playTing();render()},
+  albtab(d){S.albumTab=d.v;S.albScroll=0;playTing();render()},
   scenebg(d){S.sceneBg=d.v;playTing();render()},
   async savescene(d){
     const v=ex(document.getElementById('sci_'+d.id).value.trim());
@@ -3407,16 +3532,11 @@ const act={
     render();
   },
   tapalbstk(d,el){
+    if(Date.now()-(S.albSuppress||0)<450)return; // vừa kéo xong, bỏ qua click đi kèm
     const p=curProf(),stk=allStickers().find(x=>x.id===d.id);if(!stk)return;
     el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
     playTing();speak(stkSpeakName(stk.name),.92);
-    if(p&&p.stickers&&p.stickers[stk.id]){
-      if(!p.scenes)p.scenes={};
-      if(!p.scenes[S.sceneBg])p.scenes[S.sceneBg]=[];
-      p.scenes[S.sceneBg].push({id:stk.id,x:Math.floor(20+Math.random()*60),y:Math.floor(25+Math.random()*55)});
-      render();
-      if(S.user&&S.cur)update(ref(db,'users/'+S.user.uid+'/profiles/'+S.cur+'/scenes'),clean(p.scenes)).catch(()=>{});
-    }
+    if(p&&p.stickers&&p.stickers[stk.id])albStamp(stk.id,Math.floor(20+Math.random()*60),Math.floor(25+Math.random()*50));
   },
   clearscene(){
     const p=curProf();if(!p||!p.scenes)return;
